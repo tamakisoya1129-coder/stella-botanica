@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>星の庭 — Stella Botanica</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; background: #0a0820; }
+  body {
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+    touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  #game { position: fixed; inset: 0; display: block; }
+
+  .ui { position: fixed; z-index: 10; color: #e8dcb8; pointer-events: none; }
+  #header {
+    top: calc(env(safe-area-inset-top, 0px) + 14px); left: 0; right: 0; text-align: center;
+  }
+  #header h1 { font-size: 20px; font-weight: 500; letter-spacing: .5em; text-indent: .5em; text-shadow: 0 0 14px rgba(255,230,170,.35); }
+  #header .sub { font-size: 9px; letter-spacing: .55em; text-indent: .55em; opacity: .55; margin-top: 4px; }
+
+  #counter {
+    top: calc(env(safe-area-inset-top, 0px) + 14px); right: 16px;
+    font-size: 15px; letter-spacing: .1em; text-shadow: 0 0 10px rgba(255,230,170,.5);
+  }
+  #muteBtn {
+    top: calc(env(safe-area-inset-top, 0px) + 10px); left: 14px;
+    pointer-events: auto; cursor: pointer;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid rgba(232,220,184,.4); background: rgba(20,16,50,.45);
+    color: #e8dcb8; font-size: 15px; line-height: 32px; text-align: center;
+  }
+
+  #nav {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); left: 0; right: 0;
+    display: flex; justify-content: center; align-items: center; gap: 18px;
+  }
+  #nav button {
+    pointer-events: auto; cursor: pointer;
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid rgba(232,220,184,.4); background: rgba(20,16,50,.45);
+    color: #e8dcb8; font-size: 14px; font-family: inherit;
+  }
+  #planetName { text-align: center; min-width: 190px; }
+  #planetName .n { font-size: 16px; letter-spacing: .3em; text-indent: .3em; text-shadow: 0 0 12px rgba(255,230,170,.35); }
+  #planetName .m { font-size: 10px; letter-spacing: .2em; opacity: .6; margin-top: 3px; }
+  #planetName .d { font-size: 10px; letter-spacing: .3em; opacity: .5; margin-top: 4px; }
+
+  #zenBtn {
+    top: calc(env(safe-area-inset-top, 0px) + 52px); left: 14px;
+    pointer-events: auto; cursor: pointer;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid rgba(232,220,184,.4); background: rgba(20,16,50,.45);
+    color: #e8dcb8; font-size: 14px; line-height: 32px; text-align: center;
+    transition: opacity .8s;
+  }
+  body.zen .ui { opacity: 0 !important; pointer-events: none !important; transition: opacity .8s; }
+  body.zen #zenBtn { opacity: .3 !important; pointer-events: auto !important; }
+
+  #bookBtn {
+    top: calc(env(safe-area-inset-top, 0px) + 94px); left: 14px;
+    pointer-events: auto; cursor: pointer;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid rgba(232,220,184,.4); background: rgba(20,16,50,.45);
+    color: #e8dcb8; font-size: 13px; line-height: 32px; text-align: center;
+  }
+  #book {
+    position: fixed; inset: 0; background: rgba(6,5,20,.78); display: none;
+    z-index: 50; padding: 26px 16px; overflow-y: auto; touch-action: pan-y;
+  }
+  #book.open { display: block; }
+  #bookInner {
+    max-width: 440px; margin: 0 auto; padding: 22px 20px;
+    background: rgba(18,14,44,.94); border: 1px solid rgba(232,220,184,.4); border-radius: 14px;
+    color: #e8dcb8;
+  }
+  #bookInner h2 { font-size: 18px; font-weight: 500; letter-spacing: .5em; text-indent: .5em; text-align: center; margin-bottom: 10px; }
+  #bookStats { text-align: center; font-size: 11px; letter-spacing: .15em; opacity: .7; margin-bottom: 16px; }
+  .disc { display: flex; align-items: center; gap: 14px; padding: 9px 4px; border-bottom: 1px solid rgba(232,220,184,.14); }
+  .disc .medal {
+    flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid rgba(232,220,184,.55); text-align: center; line-height: 35px; font-size: 16px;
+    color: #ffe9b0; text-shadow: 0 0 8px rgba(255,220,140,.6);
+  }
+  .disc.locked .medal { border-color: rgba(232,220,184,.2); color: rgba(232,220,184,.3); text-shadow: none; }
+  .disc .t b { display: block; font-size: 14px; font-weight: 500; letter-spacing: .1em; }
+  .disc .t span { font-size: 11px; opacity: .65; line-height: 1.6; }
+  .disc.locked .t b { opacity: .45; }
+  #closeBook {
+    display: block; margin: 18px auto 0; font-family: inherit; font-size: 13px; letter-spacing: .3em; text-indent: .3em;
+    background: none; border: 1px solid rgba(232,220,184,.4); border-radius: 22px; padding: 9px 34px;
+    color: #e8dcb8; cursor: pointer;
+  }
+
+  #hint {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); left: 0; right: 0;
+    text-align: center; font-size: 12px; letter-spacing: .3em; text-indent: .3em;
+    opacity: .75; transition: opacity 1.2s;
+  }
+  #hint.hide { opacity: 0; }
+
+  #banner {
+    top: 26%; left: 0; right: 0; text-align: center;
+    opacity: 0; transition: opacity 1.6s;
+  }
+  #banner.show { opacity: 1; }
+  #banner .t { font-size: 22px; letter-spacing: .45em; text-indent: .45em; color: #ffe9b0; text-shadow: 0 0 22px rgba(255,220,140,.8); }
+  #banner .s { font-size: 11px; letter-spacing: .3em; opacity: .75; margin-top: 8px; }
+
+  #toast {
+    top: 20%; left: 0; right: 0; text-align: center; font-size: 13px; letter-spacing: .25em;
+    opacity: 0; transition: opacity .8s;
+  }
+  #toast.show { opacity: .9; }
+
+  #fade { position: fixed; inset: 0; background: #060518; opacity: 0; pointer-events: none; transition: opacity .55s; z-index: 20; }
+  #fade.on { opacity: 1; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div class="ui" id="header"><h1>星の庭</h1><div class="sub">STELLA BOTANICA</div></div>
+<div class="ui" id="counter">✦ <span id="starCount">0</span></div>
+<button class="ui" id="muteBtn">♪</button>
+<button class="ui" id="zenBtn" title="鑑賞モード">✧</button>
+<button class="ui" id="bookBtn" title="発見の記">❈</button>
+
+<div id="book">
+  <div id="bookInner">
+    <h2>発見の記</h2>
+    <div id="bookStats"></div>
+    <div id="bookRows"></div>
+    <button id="closeBook">とじる</button>
+  </div>
+</div>
+<div class="ui" id="hint">星に触れて、種をまく　─　♪ 音が流れます</div>
+<div class="ui" id="banner"><div class="t"></div><div class="s"></div></div>
+<div class="ui" id="toast"></div>
+<div class="ui" id="nav">
+  <button id="prevBtn">❮</button>
+  <div id="planetName"><div class="n"></div><div class="m"></div><div class="d"></div></div>
+  <button id="nextBtn">❯</button>
+</div>
+<div id="fade"></div>
+
+<script>
+'use strict';
+const TAU = Math.PI * 2;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1, Rp = 0, PC = { x: 0, y: 0 };
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOutBack = t => { const c = 1.70158; t -= 1; return 1 + (c + 1) * t * t * t + c * t * t; };
+const easeInOut = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+// ---------------- 星座デザイン ----------------
+const BUTTERFLY = {
+  stars: [[.50, .34], [.50, .62], [.30, .18], [.18, .42], [.32, .64], [.70, .18], [.82, .42], [.68, .64]],
+  lines: [[0, 1], [0, 2], [2, 3], [3, 4], [4, 1], [0, 5], [5, 6], [6, 7], [7, 1]],
+};
+const MOONBOAT = {
+  stars: [[.30, .40], [.26, .55], [.32, .68], [.46, .76], [.62, .74], [.74, .62], [.52, .28]],
+  lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [3, 6]],
+};
+const LYRE = {
+  stars: [[.38, .20], [.62, .20], [.32, .38], [.68, .38], [.36, .60], [.64, .60], [.44, .74], [.56, .74]],
+  lines: [[0, 2], [2, 4], [4, 6], [1, 3], [3, 5], [5, 7], [6, 7], [0, 1], [2, 3]],
+};
+const SAKURA = {
+  stars: [[.50, .45], [.50, .23], [.71, .38], [.63, .62], [.37, .62], [.29, .38], [.50, .78]],
+  lines: [[0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [1, 2], [2, 3], [3, 4], [4, 5], [5, 1], [0, 6]],
+};
+const ROCKET = {
+  stars: [[.50, .14], [.42, .32], [.58, .32], [.42, .56], [.58, .56], [.30, .70], [.70, .70], [.50, .82]],
+  lines: [[0, 1], [0, 2], [1, 3], [2, 4], [3, 4], [3, 5], [4, 6], [5, 7], [6, 7]],
+};
+const HEART = {
+  stars: [[.50, .74], [.28, .42], [.35, .22], [.50, .34], [.65, .22], [.72, .42]],
+  lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]],
+};
+const BIRD = {
+  stars: [[.18, .40], [.35, .28], [.50, .42], [.65, .28], [.82, .40], [.50, .64]],
+  lines: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5]],
+};
+const CLOVER = {
+  stars: [[.50, .45], [.35, .28], [.65, .28], [.35, .62], [.65, .62], [.50, .80]],
+  lines: [[0, 1], [0, 2], [0, 3], [0, 4], [1, 2], [3, 4], [0, 5]],
+};
+
+// ---------------- 惑星の定義 ----------------
+// prog: コード進行（Cからの半音、各コードの構成音）
+const PLANETS = [
+  {
+    name: 'プリマヴェーラ', music: 'パッヘルベルのカノン', constName: '蝶座 プシュケ',
+    sky: ['#241540', '#4a2160', '#12102e'],
+    nebula: ['rgba(255,140,180,alpha)', 'rgba(255,200,120,alpha)', 'rgba(150,110,220,alpha)'],
+    planetCol: { light: '#e9f2cf', base: '#94b26e', dark: '#3c5a3a', atmo: 'rgba(190,235,170,' },
+    branch: ['#3d5233', '#4f6b3c', '#6b8a4a', '#8aa860'],
+    petalHues: [338, 350, 14, 44, 320],
+    starTint: '#ffe6c8',
+    prog: [[2, 6, 9], [9, 13, 16], [11, 14, 18], [6, 9, 13], [7, 11, 14], [2, 6, 9], [7, 11, 14], [9, 13, 16]],
+    chordDur: 2.9, constellation: BUTTERFLY,
+  },
+  {
+    name: 'ノットゥルノ', music: 'ショパンの夜想曲に寄せて', constName: '月の舟座',
+    sky: ['#0a1030', '#182a55', '#060820'],
+    nebula: ['rgba(90,150,255,alpha)', 'rgba(140,110,230,alpha)', 'rgba(70,200,220,alpha)'],
+    planetCol: { light: '#dfe8f5', base: '#7d8fb5', dark: '#2c3560', atmo: 'rgba(140,180,255,' },
+    branch: ['#2c3a52', '#3c4f6e', '#54698c', '#7488ac'],
+    petalHues: [205, 228, 258, 190, 285],
+    starTint: '#d8e8ff',
+    prog: [[9, 12, 16], [5, 9, 12], [0, 4, 7], [7, 11, 14], [9, 12, 16], [2, 5, 9], [4, 8, 11], [9, 12, 16]],
+    chordDur: 3.7, constellation: MOONBOAT,
+  },
+  {
+    name: 'アルモニア', music: 'サティのジムノペディに寄せて', constName: '竪琴座 オルフェウスのリラ',
+    sky: ['#0e2430', '#284048', '#150f30'],
+    nebula: ['rgba(80,220,180,alpha)', 'rgba(230,110,200,alpha)', 'rgba(255,190,90,alpha)'],
+    planetCol: { light: '#f3e3d0', base: '#b08a9a', dark: '#4a3050', atmo: 'rgba(240,180,200,' },
+    branch: ['#4a3550', '#5f4468', '#7c5a80', '#9a7698'],
+    petalHues: [300, 168, 40, 330, 190],
+    starTint: '#ffe9d8',
+    prog: [[7, 11, 14, 18], [2, 6, 9, 13], [7, 11, 14, 18], [4, 7, 11, 14]],
+    chordDur: 4.3, constellation: LYRE,
+  },
+  {
+    name: 'ルーチェ', music: 'ドビュッシーの月の光に寄せて', constName: '桜座 ルナリア', unlock: 40,
+    sky: ['#1c2138', '#3a415f', '#0d0f22'],
+    nebula: ['rgba(200,210,255,alpha)', 'rgba(255,190,220,alpha)', 'rgba(180,160,255,alpha)'],
+    planetCol: { light: '#f7f3ea', base: '#c2bccb', dark: '#4e4a6a', atmo: 'rgba(220,220,255,' },
+    branch: ['#4a4460', '#5e5878', '#7a7396', '#a099b8'],
+    petalHues: [335, 345, 50, 220, 300],
+    starTint: '#f0e8ff',
+    prog: [[1, 5, 8, 12], [6, 10, 13, 17], [8, 12, 15, 19], [5, 8, 12, 15]],
+    chordDur: 4.8, constellation: SAKURA,
+  },
+  {
+    name: 'コメータ', music: 'ヴィヴァルディの春に寄せて', constName: 'ロケット座 エスペランサ', unlock: 120,
+    sky: ['#1e3040', '#3e5a4e', '#151230'],
+    nebula: ['rgba(255,210,110,alpha)', 'rgba(110,230,180,alpha)', 'rgba(255,140,120,alpha)'],
+    planetCol: { light: '#fbeecb', base: '#d1a06a', dark: '#5e3a34', atmo: 'rgba(255,220,150,' },
+    branch: ['#5c4630', '#75603c', '#8f7a48', '#ab9458'],
+    petalHues: [15, 45, 90, 170, 55],
+    starTint: '#fff2c8',
+    prog: [[4, 8, 11], [11, 15, 18], [13, 16, 20], [9, 13, 16]],
+    chordDur: 2.4, constellation: ROCKET,
+  },
+];
+function isLocked(i) { return i < PLANETS.length && save.total < (PLANETS[i].unlock || 0); }
+const STOPS = () => PLANETS.length + 1; // 5惑星 + 日替わりの星
+
+// ---------------- 日替わりの星 ----------------
+let DAILY = null;
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function buildDaily() {
+  const ds = todayStr();
+  const rng = mulberry32(parseInt(ds.replaceAll('-', ''), 10));
+  const CPOOL = [BUTTERFLY, MOONBOAT, LYRE, SAKURA, ROCKET, HEART, BIRD, CLOVER];
+  const CNAMES = ['蝶', '月の舟', '竪琴', '桜', 'ロケット', 'ハート', '渡り鳥', 'よつ葉'];
+  const ci = Math.floor(rng() * CPOOL.length);
+  const pi = Math.floor(rng() * PLANETS.length);
+  const tr = Math.floor(rng() * 7) - 3;
+  const hb = Math.floor(rng() * 360);
+  const h2 = (hb + 30 + Math.floor(rng() * 60)) % 360;
+  const A = ['琥珀', '群青', '翡翠', '茜', '菫', '白銀', '珊瑚', '黄昏', '暁', '月白', '霞', '木漏れ日'];
+  const B = ['のワルツ', 'の子守唄', 'の前奏曲', 'の舟歌', 'の間奏曲', 'のセレナーデ'];
+  const d = new Date();
+  DAILY = {
+    date: ds, isDaily: true, unlock: 0,
+    name: `${d.getMonth() + 1}月${d.getDate()}日の星`,
+    music: `${A[Math.floor(rng() * A.length)]}${B[Math.floor(rng() * B.length)]}`,
+    constName: `今日の星座 ${CNAMES[ci]}`,
+    sceneSeed: parseInt(ds.replaceAll('-', ''), 10) % 100000,
+    sky: [`hsl(${hb},45%,13%)`, `hsl(${h2},40%,22%)`, `hsl(${(hb + 180) % 360},35%,8%)`],
+    nebula: [`hsla(${h2},80%,70%,alpha)`, `hsla(${(hb + 180) % 360},70%,65%,alpha)`, `hsla(${hb},70%,75%,alpha)`],
+    planetCol: { light: `hsl(${h2},35%,88%)`, base: `hsl(${h2},30%,62%)`, dark: `hsl(${hb},35%,28%)`, atmo: `hsla(${h2},70%,75%,` },
+    branch: [0, 1, 2, 3].map(i => `hsl(${hb},25%,${26 + i * 10}%)`),
+    petalHues: [0, 1, 2, 3, 4].map(() => Math.floor(rng() * 360)),
+    starTint: '#fff3d6',
+    prog: PLANETS[pi].prog.map(ch => ch.map(s => s + tr)),
+    chordDur: 2.6 + rng() * 2.2,
+    constellation: CPOOL[ci],
+  };
+}
+function ensureDaily() {
+  const ds = todayStr();
+  if (!DAILY || DAILY.date !== ds) buildDaily();
+  if (!save.daily || save.daily.date !== ds) {
+    save.daily = { date: ds, plants: [], filled: 0, complete: false };
+    persist();
+  }
+}
+function curPlanet() { return save.cur === PLANETS.length ? DAILY : PLANETS[save.cur]; }
+function curState() { return save.cur === PLANETS.length ? save.daily : save.planets[save.cur]; }
+const MAX_PLANTS = 9;
+const GROW_SEC = 16;
+const GT_MAX = 12; // 大樹は十二夜で完成
+
+// ---------------- セーブ ----------------
+const SAVE_KEY = 'stella-botanica-v1';
+let save = { cur: 0, total: 0, muted: false, planets: PLANETS.map(() => ({ plants: [], filled: 0, complete: false })) };
+try {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (raw) { const s = JSON.parse(raw); if (s && Array.isArray(s.planets)) save = s; }
+} catch (e) {}
+while (save.planets.length < PLANETS.length) save.planets.push({ plants: [], filled: 0, complete: false });
+for (const ps of save.planets) if (!ps.gt) ps.gt = { stage: 0, last: '' };
+if (save.cur > PLANETS.length) save.cur = 0;
+if (!save.disc) save.disc = {};
+if (!save.stats) save.stats = { blooms: 0, dailyLit: 0 };
+function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+// ---------------- 音（WebAudio）----------------
+const Audio2 = {
+  ctx: null, master: null, ready: false, lastNote: 0,
+  init() {
+    if (this.ready) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AC();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = save.muted ? 0 : 0.9;
+      const delay = this.ctx.createDelay(2);
+      delay.delayTime.value = 0.46;
+      const fb = this.ctx.createGain(); fb.gain.value = 0.35;
+      const wet = this.ctx.createGain(); wet.gain.value = 0.28;
+      this.master.connect(this.ctx.destination);
+      this.master.connect(delay); delay.connect(fb); fb.connect(delay);
+      delay.connect(wet); wet.connect(this.ctx.destination);
+      this.ready = true;
+    } catch (e) {}
+  },
+  freq(semi, oct = 0) { return 261.6256 * Math.pow(2, semi / 12 + oct); },
+  bell(f, vel = 0.16, dur = 3.2) {
+    if (!this.ready) return;
+    const t = this.ctx.currentTime;
+    if (t - this.lastNote < 0.1) return;
+    this.lastNote = t;
+    for (const [mult, amp] of [[1, 1], [2.01, 0.35], [4.16, 0.12]]) {
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f * mult;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * amp, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0005, t + dur * (mult === 1 ? 1 : 0.5));
+      o.connect(g).connect(this.master);
+      o.start(t); o.stop(t + dur + 0.1);
+    }
+  },
+  pad(semis, dur) {
+    if (!this.ready) return;
+    const t = this.ctx.currentTime;
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 640;
+    lp.connect(this.master);
+    semis.forEach((s, i) => {
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'triangle';
+      o.frequency.value = this.freq(s, i === 0 ? -2 : -1);
+      o.detune.value = (Math.random() - 0.5) * 7;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.045, t + dur * 0.45);
+      g.gain.linearRampToValueAtTime(0.0001, t + dur + 1.6);
+      o.connect(g).connect(lp);
+      o.start(t); o.stop(t + dur + 1.8);
+    });
+  },
+  arpeggio(semis) {
+    if (!this.ready) return;
+    [...semis, semis[0] + 12, semis[1] + 12, semis[0] + 24].forEach((s, i) => {
+      setTimeout(() => this.bellForce(this.freq(s, 1), 0.14), i * 130);
+    });
+  },
+  bellForce(f, v) { this.lastNote = 0; this.bell(f, v); },
+  setMuted(m) { if (this.master) this.master.gain.value = m ? 0 : 0.9; },
+};
+
+// ---------------- 植物の生成（シード決定論的）----------------
+// 樹形: tree(立ち木) / weeping(しだれ) / bamboo(星竹)。まれに stellar(星の花・白金)
+function genTree(seed, rp, forceArch) {
+  const rng = mulberry32(seed);
+  const archR = rng();
+  const arch = forceArch || (archR < 0.5 ? 'tree' : archR < 0.78 ? 'weeping' : 'bamboo');
+  const stellar = rng() < 0.035;
+  const h = rp * (0.52 + rng() * 0.28) * (arch === 'bamboo' ? 1.1 : 1);
+  const segs = [], flowers = [], leaves = [];
+  let maxD = 0;
+  function addFlower(x, y, d, mul = 1) {
+    flowers.push({ x, y, d, r: h * (0.05 + rng() * 0.035) * mul, petals: 5 + Math.floor(rng() * 3), hueIdx: Math.floor(rng() * 5), bloomed: false, bloomAt: 0, phase: rng() * TAU });
+  }
+  function branch(x, y, ang, len, w, depth, d0) {
+    let cx = x, cy = y, ca = ang, d = d0;
+    const steps = 3, sl = len / steps;
+    for (let i = 0; i < steps; i++) {
+      if (arch === 'weeping' && depth >= 1) {
+        const dir = Math.abs(ca + Math.PI / 2) < 0.01 ? (rng() < .5 ? 1 : -1) : Math.sign(ca + Math.PI / 2);
+        ca += 0.17 * dir;
+      }
+      const nx = cx + Math.cos(ca) * sl, ny = cy + Math.sin(ca) * sl;
+      segs.push({ x0: cx, y0: cy, x1: nx, y1: ny, w: w * (1 - i / (steps * 2.2)), depth, d0: d, d1: d + sl });
+      if (depth >= 1 && rng() < 0.4) {
+        leaves.push({ x: nx, y: ny, ang: ca + (rng() < .5 ? 1 : -1) * 1.2, size: h * 0.045 * (1 + rng() * .6), d: d + sl });
+      }
+      cx = nx; cy = ny; ca += (rng() - 0.5) * 0.4; d += sl;
+    }
+    maxD = Math.max(maxD, d);
+    if (depth < 3) {
+      const n = depth === 0 ? 2 + (rng() < 0.5 ? 1 : 0) : 2;
+      const spreadBase = arch === 'weeping' ? 0.75 : 0.55;
+      const decay = arch === 'weeping' ? 0.68 : 0.6;
+      for (let k = 0; k < n; k++) {
+        const spread = (k - (n - 1) / 2) * (spreadBase + rng() * 0.3) + (rng() - .5) * 0.2;
+        branch(cx, cy, ca + spread, len * (decay + rng() * 0.1), w * 0.55, depth + 1, d);
+      }
+    } else {
+      addFlower(cx, cy, d);
+    }
+  }
+  if (arch === 'bamboo') {
+    const nodes = 5;
+    let cx = 0, cy = 0, ca = -Math.PI / 2 + (rng() - .5) * 0.1, d = 0;
+    const sl = h / nodes;
+    for (let i = 0; i < nodes; i++) {
+      ca += (rng() - .5) * 0.1;
+      const nx = cx + Math.cos(ca) * sl, ny = cy + Math.sin(ca) * sl;
+      segs.push({ x0: cx, y0: cy, x1: nx, y1: ny, w: h * 0.038 * (1 - i * 0.13), depth: Math.min(3, i), d0: d, d1: d + sl });
+      if (i >= 1) {
+        const ta = ca + (i % 2 ? 0.95 : -0.95) + (rng() - .5) * 0.3;
+        const tl = h * (0.13 + rng() * 0.05);
+        const tx = nx + Math.cos(ta) * tl, ty = ny + Math.sin(ta) * tl;
+        segs.push({ x0: nx, y0: ny, x1: tx, y1: ty, w: h * 0.014, depth: 3, d0: d + sl, d1: d + sl + tl });
+        addFlower(tx, ty, d + sl + tl, 0.9);
+        leaves.push({ x: nx, y: ny, ang: ta + 0.6, size: h * 0.05, d: d + sl });
+      }
+      cx = nx; cy = ny; d += sl;
+    }
+    maxD = d + h * 0.2;
+    for (let k = 0; k < 3; k++) {
+      addFlower(cx + (rng() - .5) * h * 0.14, cy - rng() * h * 0.08, d + h * 0.1, 1.1);
+    }
+  } else {
+    branch(0, 0, -Math.PI / 2 + (rng() - .5) * 0.15, h * (arch === 'weeping' ? 0.32 : 0.38), h * 0.05, 0, 0);
+  }
+  const norm = maxD * 1.12;
+  for (const s of segs) { s.t0 = s.d0 / norm; s.t1 = s.d1 / norm; }
+  for (const l of leaves) l.t = l.d / norm;
+  // 開花は成長の3割前後から順に始まるよう、枝の深さの狭い分布を広げてマッピングする
+  for (const f of flowers) {
+    const tt = clamp((f.d / norm - 0.5) / 0.4, 0, 1);
+    f.t = clamp(0.3 + 0.62 * tt + (rng() - 0.5) * 0.12, 0.2, 0.99);
+  }
+  return { h, segs, flowers, leaves, sway: rng() * TAU, stellar, arch };
+}
+
+// ---------------- スプライトキャッシュ ----------------
+const spriteCache = new Map();
+function flowerSprite(hue, r, petals) {
+  const key = `f${hue}|${Math.round(r)}|${petals}`;
+  if (spriteCache.has(key)) return spriteCache.get(key);
+  const S = Math.ceil(r * 4.6);
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const c = cv.getContext('2d');
+  const m = S / 2;
+  const gold = hue === 'gold';
+  const glow = c.createRadialGradient(m, m, r * 0.2, m, m, S / 2);
+  glow.addColorStop(0, gold ? 'rgba(255,244,200,.7)' : `hsla(${hue},90%,78%,.5)`);
+  glow.addColorStop(1, gold ? 'rgba(255,244,200,0)' : `hsla(${hue},90%,70%,0)`);
+  c.fillStyle = glow; c.fillRect(0, 0, S, S);
+  if (gold) hue = 48;
+  for (const [rr, sat, lit, al] of gold ? [[1, 80, 85, .98], [0.55, 30, 96, .98]] : [[1, 78, 68, .95], [0.55, 85, 82, .95]]) {
+    for (let k = 0; k < petals; k++) {
+      c.save(); c.translate(m, m);
+      c.rotate(k / petals * TAU + (rr < 1 ? TAU / petals / 2 : 0));
+      c.translate(0, -r * 0.52 * rr);
+      c.fillStyle = `hsla(${hue},${sat}%,${lit}%,${al})`;
+      c.beginPath(); c.ellipse(0, 0, r * 0.3 * rr, r * 0.52 * rr, 0, 0, TAU); c.fill();
+      c.restore();
+    }
+  }
+  const cg = c.createRadialGradient(m, m, 0, m, m, r * 0.3);
+  cg.addColorStop(0, '#fff8dc'); cg.addColorStop(1, '#f0c060');
+  c.fillStyle = cg;
+  c.beginPath(); c.arc(m, m, r * 0.26, 0, TAU); c.fill();
+  spriteCache.set(key, cv);
+  return cv;
+}
+function starSprite(tint, r) {
+  const key = `s${tint}|${Math.round(r)}`;
+  if (spriteCache.has(key)) return spriteCache.get(key);
+  const S = Math.ceil(r * 6);
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const c = cv.getContext('2d'); const m = S / 2;
+  const g = c.createRadialGradient(m, m, 0, m, m, S / 2);
+  g.addColorStop(0, tint); g.addColorStop(0.25, tint + '');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  c.globalAlpha = 0.85; c.fillStyle = g; c.fillRect(0, 0, S, S);
+  c.globalAlpha = 1; c.fillStyle = '#fff';
+  c.beginPath();
+  for (let k = 0; k < 4; k++) {
+    const a = k / 4 * TAU;
+    c.moveTo(m, m);
+    c.lineTo(m + Math.cos(a - 0.18) * r * 0.5, m + Math.sin(a - 0.18) * r * 0.5);
+    c.lineTo(m + Math.cos(a) * r * 2.1, m + Math.sin(a) * r * 2.1);
+    c.lineTo(m + Math.cos(a + 0.18) * r * 0.5, m + Math.sin(a + 0.18) * r * 0.5);
+  }
+  c.fill();
+  c.beginPath(); c.arc(m, m, r * 0.55, 0, TAU); c.fill();
+  spriteCache.set(key, cv);
+  return cv;
+}
+
+// ---------------- 背景・惑星（オフスクリーン描画）----------------
+let backdrop = null, planetSprite = null, twinkles = [];
+function buildScene(p) {
+  backdrop = document.createElement('canvas');
+  backdrop.width = W * DPR; backdrop.height = H * DPR;
+  const c = backdrop.getContext('2d');
+  c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g = c.createLinearGradient(0, 0, W * 0.2, H);
+  g.addColorStop(0, p.sky[0]); g.addColorStop(0.55, p.sky[1]); g.addColorStop(1, p.sky[2]);
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+  const rng = mulberry32((p.sceneSeed ?? save.cur) * 999 + 7);
+  for (let i = 0; i < 9; i++) {
+    const nx = rng() * W, ny = rng() * H * 0.75, nr = (0.18 + rng() * 0.3) * Math.max(W, H);
+    const col = p.nebula[i % p.nebula.length].replace('alpha', (0.05 + rng() * 0.1).toFixed(3));
+    const ng = c.createRadialGradient(nx, ny, 0, nx, ny, nr);
+    ng.addColorStop(0, col); ng.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = ng;
+    c.beginPath(); c.arc(nx, ny, nr, 0, TAU); c.fill();
+  }
+  for (let i = 0; i < 150; i++) {
+    const a = 0.15 + rng() * 0.6;
+    c.fillStyle = `rgba(255,255,255,${a.toFixed(2)})`;
+    c.beginPath(); c.arc(rng() * W, rng() * H, rng() < 0.9 ? 0.7 : 1.4, 0, TAU); c.fill();
+  }
+  const vg = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.75);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(2,2,12,.5)');
+  c.fillStyle = vg; c.fillRect(0, 0, W, H);
+
+  const rad = Rp * 1.45;
+  planetSprite = document.createElement('canvas');
+  planetSprite.width = planetSprite.height = Math.ceil(rad * 2 * DPR);
+  const pc = planetSprite.getContext('2d');
+  pc.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const m = rad;
+  const ag = pc.createRadialGradient(m, m, Rp * 0.85, m, m, rad);
+  ag.addColorStop(0, p.planetCol.atmo + '.45)');
+  ag.addColorStop(0.6, p.planetCol.atmo + '.14)');
+  ag.addColorStop(1, p.planetCol.atmo + '0)');
+  pc.fillStyle = ag; pc.beginPath(); pc.arc(m, m, rad, 0, TAU); pc.fill();
+  const bg = pc.createRadialGradient(m - Rp * 0.38, m - Rp * 0.42, Rp * 0.12, m, m, Rp);
+  bg.addColorStop(0, p.planetCol.light);
+  bg.addColorStop(0.55, p.planetCol.base);
+  bg.addColorStop(1, p.planetCol.dark);
+  pc.fillStyle = bg; pc.beginPath(); pc.arc(m, m, Rp, 0, TAU); pc.fill();
+  pc.save();
+  pc.beginPath(); pc.arc(m, m, Rp, 0, TAU); pc.clip();
+  const prng = mulberry32((p.sceneSeed ?? save.cur) * 31 + 5);
+  for (let i = 0; i < 5; i++) {
+    pc.fillStyle = `rgba(${prng() < .5 ? '255,255,255' : '10,20,10'},${(0.04 + prng() * 0.05).toFixed(3)})`;
+    pc.beginPath();
+    pc.ellipse(m + (prng() - .5) * Rp, m + (prng() - .2) * Rp, Rp * (0.3 + prng() * 0.5), Rp * (0.08 + prng() * 0.1), (prng() - .5) * 0.8, 0, TAU);
+    pc.fill();
+  }
+  for (let i = 0; i < 7; i++) {
+    const cx2 = m + (prng() - .5) * 1.5 * Rp, cy2 = m + (prng() - .5) * 1.5 * Rp, cr = Rp * (0.03 + prng() * 0.06);
+    pc.fillStyle = 'rgba(0,0,0,.09)';
+    pc.beginPath(); pc.arc(cx2, cy2, cr, 0, TAU); pc.fill();
+    pc.fillStyle = 'rgba(255,255,255,.08)';
+    pc.beginPath(); pc.arc(cx2 - cr * 0.25, cy2 - cr * 0.25, cr * 0.7, 0, TAU); pc.fill();
+  }
+  pc.restore();
+  pc.strokeStyle = 'rgba(255,255,255,.3)'; pc.lineWidth = 1.4;
+  pc.beginPath(); pc.arc(m, m, Rp - 1, Math.PI * 0.95, Math.PI * 1.55); pc.stroke();
+
+  twinkles = [];
+  const trng = mulberry32((p.sceneSeed ?? save.cur) * 77 + 3);
+  for (let i = 0; i < 46; i++) {
+    twinkles.push({ x: trng() * W, y: trng() * H * 0.8, r: 0.8 + trng() * 1.3, ph: trng() * TAU, sp: 0.6 + trng() * 1.6 });
+  }
+}
+
+// ---------------- 実行時状態 ----------------
+let plants = [];       // {a, seed, born(ms) | done, tree}
+let particles = [];    // 花びら・光の粒
+let flights = [];      // 星のかけらの飛翔 {sx,sy,slot,t0}
+let shooting = null;
+let rot = 0, chordIdx = 0, nextChordAt = 0, bannerShown = false;
+
+function skyBox() { return { x: W * 0.08, y: H * 0.06, w: W * 0.84, h: H * 0.44 }; }
+function slotPos(i) {
+  const p = curPlanet(), b = skyBox(), s = p.constellation.stars[i];
+  return { x: b.x + s[0] * b.w, y: b.y + s[1] * b.h };
+}
+
+function loadPlanet() {
+  ensureDaily();
+  const st = curState();
+  plants = st.plants.map(pd => {
+    const tree = genTree(pd.seed, Rp);
+    for (const f of tree.flowers) f.bloomed = true;
+    return { a: pd.a, seed: pd.seed, done: true, born: 0, tree, fruitIdx: -1, fruitAt: performance.now() + 6000 + Math.random() * 12000 };
+  });
+  particles = []; flights = []; showerStars = []; shooting = null;
+  chordIdx = 0; nextChordAt = 0; bannerShown = st.complete;
+  const p = curPlanet();
+  buildScene(p);
+  loadGreatTree();
+  if (greatTree && greatTree.st.gt.stage === 0 && gtCanGrow()) {
+    setTimeout(() => toast('🌱 星の若木が芽生えています ─ 一日一度、触れて育ちます'), 600);
+  }
+  const locked = isLocked(save.cur);
+  document.querySelector('#planetName .n').textContent = locked ? '？？？' : p.name;
+  document.querySelector('#planetName .m').textContent = locked ? `✦ ${p.unlock} あつめると目覚める星` : '♪ ' + p.music;
+  document.querySelector('#planetName .d').textContent =
+    Array.from({ length: STOPS() }, (_, i) => i === save.cur ? '●' : (i === PLANETS.length ? '☾' : '·')).join(' ');
+  updateCounter();
+}
+
+let lockedFlags = PLANETS.map((_, i) => isLocked(i));
+function updateCounter() {
+  document.getElementById('starCount').textContent = save.total;
+  PLANETS.forEach((p, i) => {
+    if (lockedFlags[i] && !isLocked(i)) {
+      lockedFlags[i] = false;
+      setTimeout(() => toast(`✨ 新しい星「${p.name}」が目覚めました`), 900);
+    }
+  });
+}
+
+// ---------------- 発見の記 ----------------
+const DISCOVERIES = [
+  { id: 'arch_tree', k: '木', name: '立ちの木', hint: '種をまいてみよう', desc: 'まっすぐ天へ伸びる、いちばん素直な木。' },
+  { id: 'arch_weeping', k: '垂', name: 'しだれの木', hint: 'いろいろな種をまこう', desc: '枝が星の重さでしなだれる、やさしい木。' },
+  { id: 'arch_bamboo', k: '竹', name: '星竹', hint: 'いろいろな種をまこう', desc: '節ごとに花を灯しながら、すっと伸びる竹。' },
+  { id: 'stellar', k: '華', name: '星の花', hint: 'ごくまれに舞い降りるという…', desc: '白金に輝く奇跡の木。星のかけらを倍、落とす。' },
+  { id: 'fruit', k: '実', name: '光の果実', hint: '育ちきった木を見守ろう', desc: '熟した光をはじめて摘んだ。庭は生き続ける。' },
+  { id: 'meteor', k: '流', name: '流れ星', hint: '星降る夜に、空へ触れて', desc: '夜空を裂く光を、この手でつかまえた。' },
+  { id: 'gt_first', k: '芽', name: '星の若木', hint: '目覚めた星の頂に芽生える若木に触れよう', desc: '一日にひとつだけ、大樹は育つ。' },
+  { id: 'gt_full', k: '樹', name: '大樹', hint: '若木を十二夜、育てつづけよう', desc: '十二夜をかけて、大樹が天に満ちた。' },
+  { id: 'const_0', k: '蝶', name: '蝶座 プシュケ', hint: 'プリマヴェーラの空に', desc: '春の星の空に、蝶がはばたいた。' },
+  { id: 'const_1', k: '舟', name: '月の舟座', hint: 'ノットゥルノの空に', desc: '夜の海を、月の舟が渡ってゆく。' },
+  { id: 'const_2', k: '琴', name: '竪琴座 オルフェウスのリラ', hint: 'アルモニアの空に', desc: '風のない夜には、弦の音が聴こえるという。' },
+  { id: 'const_3', k: '桜', name: '桜座 ルナリア', hint: 'ルーチェの空に', desc: '月の光のなかで、桜がひらいた。' },
+  { id: 'const_4', k: '翔', name: 'ロケット座 エスペランサ', hint: 'コメータの空に', desc: '希望という名の船が、空へ昇った。' },
+  { id: 'daily_first', k: '日', name: '今日の星', hint: '日替わりの星に星座を灯そう', desc: '一夜かぎりの星座を、はじめて灯した。' },
+  { id: 'full_garden', k: '満', name: '満開の庭', hint: 'ひとつの星を花で満たそう', desc: '9本の木が、咲きそろった。' },
+  { id: 'all_const', k: '天', name: '五つの星座', hint: 'すべての星の空に星座を', desc: '五つの空に、五つの物語が生まれた。' },
+];
+function discover(id) {
+  if (save.disc[id]) return;
+  save.disc[id] = true;
+  const d = DISCOVERIES.find(x => x.id === id);
+  if (d) setTimeout(() => toast(`❈ 発見の記 ─ 「${d.name}」`), 400);
+  persist();
+}
+
+const toastEl = document.getElementById('toast');
+let toastTimer = null;
+function toast(msg) {
+  toastEl.textContent = msg; toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  Rp = Math.min(W, H) * 0.335;
+  PC = { x: W / 2, y: H * 0.86 + Rp * 0.25 };
+  spriteCache.clear();
+  for (const pl of plants) {
+    const wasDone = pl.done, born = pl.born;
+    const bloomedFlags = pl.tree.flowers.map(f => f.bloomed);
+    pl.tree = genTree(pl.seed, Rp);
+    pl.tree.flowers.forEach((f, i) => { f.bloomed = bloomedFlags[i] ?? false; });
+    pl.done = wasDone; pl.born = born;
+  }
+  ensureDaily();
+  buildScene(curPlanet());
+  loadGreatTree();
+}
+window.addEventListener('resize', resize);
+
+// ---------------- 種まき ----------------
+function plantSeed(px, py) {
+  const st = curState();
+  const dx = px - PC.x, dy = py - PC.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist > Rp * 1.45) return false;
+  if (isLocked(save.cur)) { toast(`この星はまだ眠っています ─ ✦${curPlanet().unlock} で目覚めます`); return false; }
+  if (plants.length >= MAX_PLANTS) { toast('この星の庭は、もう満開です'); return false; }
+  const a = Math.atan2(dx, -dy) - rot;
+  const seed = (Math.random() * 1e9) | 0;
+  const tree = genTree(seed, Rp);
+  plants.push({ a, seed, born: performance.now(), done: false, tree });
+  st.plants.push({ a, seed });
+  persist();
+  const base = worldOf(a, 0, 0);
+  for (let i = 0; i < 8; i++) {
+    particles.push({ kind: 'dust', x: base.x, y: base.y, vx: (Math.random() - .5) * 40, vy: -20 - Math.random() * 40, life: 0.9, tint: '#cfe8a0' });
+  }
+  Audio2.bell(Audio2.freq(curPlanet().prog[0][0], 0), 0.1, 1.6);
+  document.getElementById('hint').classList.add('hide');
+  discover('arch_' + tree.arch);
+  if (tree.stellar) discover('stellar');
+  if (plants.length >= MAX_PLANTS) discover('full_garden');
+  return true;
+}
+
+function worldOf(a, lx, ly) {
+  const ang = a + rot;
+  const xa = lx, ya = ly - Rp;
+  return {
+    x: PC.x + xa * Math.cos(ang) - ya * Math.sin(ang),
+    y: PC.y + xa * Math.sin(ang) + ya * Math.cos(ang),
+  };
+}
+
+function bloomFlower(pl, f) {
+  f.bloomed = true; f.bloomAt = performance.now();
+  const pos = worldOf(pl.a, f.x, f.y);
+  const p = curPlanet();
+  save.stats.blooms++;
+  const chord = p.prog[chordIdx % p.prog.length];
+  const s = chord[Math.floor(Math.random() * chord.length)];
+  const fq = Audio2.freq(s, Math.random() < 0.5 ? 1 : 2);
+  Audio2.bell(fq, 0.15);
+  if (pl.tree.stellar) setTimeout(() => Audio2.bellForce(fq * 2, 0.1), 150);
+  for (let i = 0; i < 5; i++) {
+    particles.push({ kind: 'dust', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 50, vy: -30 - Math.random() * 30, life: 1.1, tint: pl.tree.stellar ? '#fff2c0' : `hsl(${p.petalHues[f.hueIdx]},80%,80%)` });
+  }
+  const st = curState();
+  const nSlots = p.constellation.stars.length;
+  const pending = flights.filter(fl => fl.slot >= 0).length;
+  if (st.filled + pending < nSlots && (pl.tree.stellar || Math.random() < 0.3)) {
+    flights.push({ sx: pos.x, sy: pos.y, slot: st.filled + pending, t0: performance.now() });
+  } else {
+    flights.push({ sx: pos.x, sy: pos.y, slot: -1, t0: performance.now() });
+  }
+  save.total += pl.tree.stellar ? 2 : 1;
+  updateCounter(); persist();
+}
+
+// ---------------- 光の果実（収穫）----------------
+function updateFruits(now) {
+  for (const pl of plants) {
+    if (!pl.done || !pl.tree.flowers.length) continue;
+    if (pl.fruitIdx == null) pl.fruitIdx = -1;
+    if (pl.fruitAt == null) pl.fruitAt = now + 12000 + Math.random() * 14000;
+    if (pl.fruitIdx < 0 && now > pl.fruitAt) {
+      pl.fruitIdx = Math.floor(Math.random() * pl.tree.flowers.length);
+    }
+  }
+}
+function tryHarvest(px, py) {
+  const p = curPlanet();
+  for (const pl of plants) {
+    if (pl.fruitIdx == null || pl.fruitIdx < 0) continue;
+    const f = pl.tree.flowers[pl.fruitIdx];
+    const pos = worldOf(pl.a, f.x, f.y);
+    if (Math.hypot(px - pos.x, py - pos.y) < Rp * 0.2) {
+      pl.fruitIdx = -1;
+      pl.fruitAt = performance.now() + 26000 + Math.random() * 16000;
+      save.total += 3;
+      discover('fruit');
+      const chord = p.prog[chordIdx % p.prog.length];
+      Audio2.bell(Audio2.freq(chord[0], 1), 0.16);
+      setTimeout(() => Audio2.bellForce(Audio2.freq(chord[2 % chord.length], 1), 0.12), 160);
+      for (let i = 0; i < 12; i++) {
+        particles.push({ kind: 'dust', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 90, vy: -20 - Math.random() * 70, life: 1.2, tint: '#ffe9a0' });
+      }
+      updateCounter(); persist();
+      return true;
+    }
+  }
+  return false;
+}
+
+// ---------------- 流星群 ----------------
+let showerUntil = 0, nextShowerAt = performance.now() + 55000 + Math.random() * 50000, showerStars = [];
+function updateShower(now, dt) {
+  if (now > nextShowerAt && now > showerUntil) {
+    showerUntil = now + 18000;
+    nextShowerAt = now + 90000 + Math.random() * 70000;
+    toast('🌠 流星群 ─ 流れ星に触れると星のかけら');
+  }
+  if (now < showerUntil && Math.random() < 0.055 && showerStars.length < 7) {
+    showerStars.push({
+      x: W * (0.15 + Math.random() * 0.85), y: -10 + Math.random() * H * 0.15,
+      vx: -(140 + Math.random() * 130), vy: 100 + Math.random() * 80, life: 2.4,
+    });
+  }
+  for (let i = showerStars.length - 1; i >= 0; i--) {
+    const s = showerStars[i];
+    s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
+    if (s.life <= 0 || s.x < -60 || s.y > H * 0.8) { showerStars.splice(i, 1); continue; }
+    const a = clamp(s.life, 0, 1) * 0.9;
+    ctx.strokeStyle = `rgba(255,250,220,${a.toFixed(2)})`;
+    ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(s.x - s.vx * 0.16, s.y - s.vy * 0.16);
+    ctx.stroke();
+    ctx.fillStyle = `rgba(255,255,240,${a.toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 2.4, 0, TAU); ctx.fill();
+  }
+}
+function tryCatchStar(px, py) {
+  for (let i = showerStars.length - 1; i >= 0; i--) {
+    const s = showerStars[i];
+    if (Math.hypot(px - s.x, py - s.y) < 42) {
+      showerStars.splice(i, 1);
+      save.total++;
+      discover('meteor');
+      const p = curPlanet();
+      const chord = p.prog[chordIdx % p.prog.length];
+      Audio2.bell(Audio2.freq(chord[Math.floor(Math.random() * chord.length)], 2), 0.14, 2);
+      for (let k = 0; k < 8; k++) {
+        particles.push({ kind: 'dust', x: px, y: py, vx: (Math.random() - .5) * 100, vy: (Math.random() - .5) * 100, life: 0.9, tint: '#fffbe0' });
+      }
+      updateCounter(); persist();
+      return true;
+    }
+  }
+  return false;
+}
+
+// ---------------- 大樹（実時間で育つ一本の木）----------------
+let greatTree = null;
+function gtProg(stage) { return lerp(0.07, 1, clamp(stage / GT_MAX, 0, 1)); }
+function gtCanGrow() {
+  return greatTree && greatTree.st.gt.stage < GT_MAX && greatTree.st.gt.last !== todayStr();
+}
+function gtProgress(now) {
+  if (!greatTree) return 0;
+  const to = gtProg(greatTree.st.gt.stage);
+  if (!greatTree.animAt) return to;
+  const k = clamp((now - greatTree.animAt) / 2400, 0, 1);
+  return lerp(greatTree.animFrom, to, easeInOut(k));
+}
+function loadGreatTree() {
+  greatTree = null;
+  if (save.cur >= PLANETS.length || isLocked(save.cur)) return;
+  const st = save.planets[save.cur];
+  const tree = genTree(100003 + save.cur * 7919, Rp * 1.6, 'tree');
+  tree.stellar = false;
+  for (const f of tree.flowers) f.bloomed = gtProg(st.gt.stage) >= f.t;
+  greatTree = { a: -rot, tree, st, animFrom: gtProg(st.gt.stage), animAt: 0 };
+}
+function tryNurture(px, py) {
+  if (!greatTree) return false;
+  const st = greatTree.st, tree = greatTree.tree;
+  const prog = gtProgress(performance.now());
+  const mid = worldOf(greatTree.a, 0, -tree.h * prog * 0.5);
+  if (Math.hypot(px - mid.x, py - mid.y) > Math.max(Rp * 0.42, tree.h * prog * 0.55)) return false;
+  const p = curPlanet();
+  if (st.gt.stage >= GT_MAX) {
+    Audio2.bell(Audio2.freq(p.prog[0][0], 1), 0.1, 2.4);
+    return true;
+  }
+  if (st.gt.last === todayStr()) { toast('大樹は今日のぶん、もう育ちました ─ また明日'); return true; }
+  greatTree.animFrom = gtProg(st.gt.stage);
+  greatTree.animAt = performance.now();
+  st.gt.stage++; st.gt.last = todayStr();
+  save.total += 2;
+  discover('gt_first');
+  Audio2.bell(Audio2.freq(p.prog[0][0], 0), 0.14, 2.6);
+  const base = worldOf(greatTree.a, 0, -tree.h * gtProg(st.gt.stage) * 0.4);
+  for (let i = 0; i < 10; i++) {
+    particles.push({ kind: 'dust', x: base.x, y: base.y, vx: (Math.random() - .5) * 60, vy: -20 - Math.random() * 50, life: 1.1, tint: '#d8f0b0' });
+  }
+  if (st.gt.stage >= GT_MAX) {
+    discover('gt_full');
+    save.total += 25;
+    setTimeout(() => {
+      const b = document.getElementById('banner');
+      b.querySelector('.t').textContent = '大 樹';
+      b.querySelector('.s').textContent = '十二夜を経て、天に満ちました ─ ✦25の祝福';
+      b.classList.add('show');
+      Audio2.arpeggio(curPlanet().prog[0]);
+      setTimeout(() => b.classList.remove('show'), 5200);
+    }, 900);
+  } else {
+    toast(`🌱 大樹が育ちました ─ ${st.gt.stage} / ${GT_MAX}`);
+  }
+  updateCounter(); persist();
+  return true;
+}
+function drawGreatTree(now) {
+  if (!greatTree) return;
+  const p = curPlanet(), tree = greatTree.tree, st = greatTree.st;
+  const progress = gtProgress(now);
+  for (const f of tree.flowers) {
+    if (!f.bloomed && progress >= f.t) {
+      f.bloomed = true; f.bloomAt = now;
+      const chord = p.prog[chordIdx % p.prog.length];
+      Audio2.bell(Audio2.freq(chord[Math.floor(Math.random() * chord.length)], 1), 0.1);
+    }
+  }
+  const complete = st.gt.stage >= GT_MAX;
+  ctx.save();
+  ctx.translate(PC.x, PC.y);
+  ctx.rotate(greatTree.a + rot + Math.sin(now / 2400 + tree.sway) * 0.01);
+  ctx.translate(0, -Rp + 2);
+  if (complete) {
+    const g = ctx.createRadialGradient(0, -tree.h * 0.5, tree.h * 0.1, 0, -tree.h * 0.5, tree.h * 0.85);
+    g.addColorStop(0, `rgba(255,236,180,${(0.16 + 0.05 * Math.sin(now / 1100)).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(255,236,180,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, -tree.h * 0.5, tree.h * 0.85, 0, TAU); ctx.fill();
+  }
+  ctx.lineCap = 'round';
+  for (const s of tree.segs) {
+    if (progress <= s.t0) continue;
+    const k = clamp((progress - s.t0) / (s.t1 - s.t0), 0, 1);
+    ctx.strokeStyle = p.branch[s.depth];
+    ctx.lineWidth = Math.max(0.9, s.w);
+    ctx.beginPath();
+    ctx.moveTo(s.x0, s.y0);
+    ctx.lineTo(lerp(s.x0, s.x1, k), lerp(s.y0, s.y1, k));
+    ctx.stroke();
+  }
+  ctx.fillStyle = p.branch[3];
+  for (const l of tree.leaves) {
+    if (progress <= l.t) continue;
+    const k = clamp((progress - l.t) / 0.08, 0, 1);
+    ctx.save();
+    ctx.translate(l.x, l.y); ctx.rotate(l.ang);
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath(); ctx.ellipse(l.size * k, 0, l.size * k, l.size * k * 0.38, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  for (const f of tree.flowers) {
+    if (!f.bloomed) continue;
+    const age = f.bloomAt ? clamp((now - f.bloomAt) / 600, 0, 1) : 1;
+    const sc = (f.bloomAt ? easeOutBack(age) : 1) * (1 + 0.05 * Math.sin(now / 900 + f.phase));
+    const sp = flowerSprite(complete ? 'gold' : p.petalHues[f.hueIdx], f.r, f.petals);
+    const S = f.r * 4.6 * sc;
+    ctx.drawImage(sp, f.x - S / 2, f.y - S / 2, S, S);
+  }
+  if (gtCanGrow()) {
+    const r = Rp * 0.045 * (1 + 0.25 * Math.sin(now / 380));
+    const sp = starSprite('#d8ffc8', Rp * 0.04);
+    ctx.drawImage(sp, -r * 3, -tree.h * progress - Rp * 0.05 - r * 3, r * 6, r * 6);
+  }
+  ctx.restore();
+  if (complete && Math.random() < 0.02 && tree.flowers.length) {
+    const f = tree.flowers[Math.floor(Math.random() * tree.flowers.length)];
+    const pos = worldOf(greatTree.a, f.x, f.y);
+    particles.push({ kind: 'mote', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 8, vy: -10 - Math.random() * 12, life: 2.4, tint: '#ffedb8' });
+  }
+}
+
+function starArrive(fl) {
+  const p = curPlanet(), st = curState();
+  if (fl.slot >= 0) {
+    st.filled = Math.max(st.filled, fl.slot + 1);
+    const chord = p.prog[chordIdx % p.prog.length];
+    Audio2.bell(Audio2.freq(chord[chord.length - 1], 2), 0.12, 2);
+    const pos = slotPos(fl.slot);
+    for (let i = 0; i < 6; i++) {
+      particles.push({ kind: 'dust', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 60, vy: (Math.random() - .5) * 60, life: 0.8, tint: p.starTint });
+    }
+    if (st.filled >= p.constellation.stars.length && !st.complete) {
+      st.complete = true;
+      let sub = '星座が生まれました';
+      if (p.isDaily) {
+        save.total += 20;
+        save.stats.dailyLit++;
+        sub = '一夜かぎりの星座 ─ ✦20の祝福';
+        discover('daily_first');
+        updateCounter();
+      } else {
+        discover('const_' + save.cur);
+        if (save.planets.every(s => s.complete)) discover('all_const');
+      }
+      setTimeout(() => {
+        const b = document.getElementById('banner');
+        b.querySelector('.t').textContent = p.constName;
+        b.querySelector('.s').textContent = sub;
+        b.classList.add('show');
+        Audio2.arpeggio(p.prog[0]);
+        setTimeout(() => b.classList.remove('show'), 5200);
+      }, 700);
+    }
+  }
+  persist();
+}
+
+// ---------------- 入力 ----------------
+canvas.addEventListener('pointerdown', ev => {
+  Audio2.init();
+  if (Audio2.ctx && Audio2.ctx.state === 'suspended') Audio2.ctx.resume();
+  const x = ev.clientX, y = ev.clientY;
+  if (tryCatchStar(x, y)) return;
+  if (tryHarvest(x, y)) return;
+  if (tryNurture(x, y)) return;
+  if (!plantSeed(x, y)) {
+    particles.push({ kind: 'ripple', x, y, life: 0.7, r0: 4 });
+  }
+});
+
+const fadeEl = document.getElementById('fade');
+let switching = false;
+function switchPlanet(dir) {
+  if (switching) return;
+  switching = true;
+  for (const fl of flights) if (fl.slot >= 0) starArrive(fl);
+  flights = [];
+  fadeEl.classList.add('on');
+  setTimeout(() => {
+    save.cur = (save.cur + dir + STOPS()) % STOPS();
+    persist();
+    loadPlanet();
+    fadeEl.classList.remove('on');
+    setTimeout(() => { switching = false; }, 550);
+  }, 560);
+}
+document.getElementById('prevBtn').addEventListener('click', () => switchPlanet(-1));
+document.getElementById('nextBtn').addEventListener('click', () => switchPlanet(1));
+
+const muteBtn = document.getElementById('muteBtn');
+function refreshMute() { muteBtn.textContent = save.muted ? '∅' : '♪'; }
+muteBtn.addEventListener('click', () => {
+  save.muted = !save.muted;
+  Audio2.init(); Audio2.setMuted(save.muted);
+  refreshMute(); persist();
+});
+refreshMute();
+
+document.getElementById('zenBtn').addEventListener('click', () => {
+  document.body.classList.toggle('zen');
+});
+
+// ---------------- 発見の記（開閉と描画）----------------
+const bookEl = document.getElementById('book');
+document.getElementById('bookBtn').addEventListener('click', () => {
+  const found = DISCOVERIES.filter(d => save.disc[d.id]).length;
+  document.getElementById('bookStats').textContent =
+    `✦ ${save.total}　／　咲いた花 ${save.stats.blooms}　／　灯した今日の星 ${save.stats.dailyLit}　／　発見 ${found}/${DISCOVERIES.length}`;
+  const rows = document.getElementById('bookRows');
+  rows.innerHTML = '';
+  for (const d of DISCOVERIES) {
+    const got = !!save.disc[d.id];
+    const row = document.createElement('div');
+    row.className = 'disc' + (got ? '' : ' locked');
+    const medal = document.createElement('div');
+    medal.className = 'medal';
+    medal.textContent = got ? d.k : '？';
+    const t = document.createElement('div');
+    t.className = 't';
+    const b = document.createElement('b');
+    b.textContent = got ? d.name : '？？？';
+    const s = document.createElement('span');
+    s.textContent = got ? d.desc : d.hint;
+    t.appendChild(b); t.appendChild(s);
+    row.appendChild(medal); row.appendChild(t);
+    rows.appendChild(row);
+  }
+  bookEl.classList.add('open');
+});
+document.getElementById('closeBook').addEventListener('click', () => bookEl.classList.remove('open'));
+
+// 日付が変わったら「今日の星」を更新する
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && DAILY && DAILY.date !== todayStr()) {
+    ensureDaily();
+    if (save.cur === PLANETS.length) loadPlanet();
+  }
+});
+
+// ---------------- 描画 ----------------
+function drawConstellation(now) {
+  const p = curPlanet(), st = curState();
+  const C = p.constellation;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,240,200,.28)';
+  ctx.lineWidth = 1;
+  for (const [i, j] of C.lines) {
+    if (i < st.filled && j < st.filled) {
+      const a = slotPos(i), b = slotPos(j);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+  }
+  for (let i = 0; i < st.filled; i++) {
+    const pos = slotPos(i);
+    const r = Rp * 0.055 * (1 + 0.12 * Math.sin(now / 700 + i * 1.7));
+    const sp = starSprite(p.starTint, Rp * 0.05);
+    ctx.drawImage(sp, pos.x - r * 3, pos.y - r * 3, r * 6, r * 6);
+  }
+  if (st.complete) {
+    ctx.globalAlpha = 0.5 + 0.2 * Math.sin(now / 900);
+    ctx.strokeStyle = 'rgba(255,240,200,.35)';
+    for (const [i, j] of C.lines) {
+      const a = slotPos(i), b = slotPos(j);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawPlant(pl, now) {
+  const p = curPlanet();
+  const progress = pl.done ? 1 : clamp((now - pl.born) / (GROW_SEC * 1000), 0, 1);
+  if (!pl.done) {
+    for (const f of pl.tree.flowers) {
+      if (!f.bloomed && progress >= f.t) bloomFlower(pl, f);
+    }
+    if (progress >= 1) { pl.done = true; }
+  }
+  ctx.save();
+  ctx.translate(PC.x, PC.y);
+  ctx.rotate(pl.a + rot + Math.sin(now / 1600 + pl.tree.sway) * 0.014);
+  ctx.translate(0, -Rp + 2);
+  ctx.lineCap = 'round';
+  for (const s of pl.tree.segs) {
+    if (progress <= s.t0) continue;
+    const k = clamp((progress - s.t0) / (s.t1 - s.t0), 0, 1);
+    ctx.strokeStyle = p.branch[s.depth];
+    ctx.lineWidth = Math.max(0.7, s.w);
+    ctx.beginPath();
+    ctx.moveTo(s.x0, s.y0);
+    ctx.lineTo(lerp(s.x0, s.x1, k), lerp(s.y0, s.y1, k));
+    ctx.stroke();
+  }
+  ctx.fillStyle = p.branch[3];
+  for (const l of pl.tree.leaves) {
+    if (progress <= l.t) continue;
+    const k = clamp((progress - l.t) / 0.08, 0, 1);
+    ctx.save();
+    ctx.translate(l.x, l.y); ctx.rotate(l.ang);
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath(); ctx.ellipse(l.size * k, 0, l.size * k, l.size * k * 0.38, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  for (const f of pl.tree.flowers) {
+    if (f.bloomed) {
+      const age = f.bloomAt ? clamp((now - f.bloomAt) / 600, 0, 1) : 1;
+      const sc = (f.bloomAt ? easeOutBack(age) : 1) * (1 + 0.05 * Math.sin(now / 900 + f.phase));
+      const sp = flowerSprite(pl.tree.stellar ? 'gold' : p.petalHues[f.hueIdx], f.r, f.petals);
+      const S = f.r * 4.6 * sc;
+      ctx.drawImage(sp, f.x - S / 2, f.y - S / 2, S, S);
+    } else if (progress > f.t - 0.08) {
+      ctx.fillStyle = p.branch[3];
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 0.3, 0, TAU); ctx.fill();
+    }
+  }
+  if (pl.fruitIdx != null && pl.fruitIdx >= 0) {
+    const f = pl.tree.flowers[pl.fruitIdx];
+    const pr = f.r * (0.62 + 0.1 * Math.sin(now / 350));
+    const sp = starSprite('#ffe9a0', f.r * 0.6);
+    ctx.drawImage(sp, f.x - pr * 3, f.y - pr * 3, pr * 6, pr * 6);
+  }
+  ctx.restore();
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  rot += dt * 0.022;
+
+  const p = curPlanet();
+  if (Audio2.ready && !save.muted && !document.hidden) {
+    if (now / 1000 >= nextChordAt) {
+      Audio2.pad(p.prog[chordIdx % p.prog.length], p.chordDur);
+      chordIdx++;
+      nextChordAt = Math.max(nextChordAt + p.chordDur, now / 1000);
+    }
+  } else {
+    nextChordAt = now / 1000 + 0.1;
+  }
+
+  ctx.drawImage(backdrop, 0, 0, W, H);
+
+  for (const tw of twinkles) {
+    const a = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(now / 1000 * tw.sp + tw.ph));
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(tw.x, tw.y, tw.r, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  if (!shooting && Math.random() < 0.0012) {
+    shooting = { x: Math.random() * W * 0.7 + W * 0.2, y: Math.random() * H * 0.2, vx: -(180 + Math.random() * 120), vy: 90 + Math.random() * 60, life: 1 };
+  }
+  if (shooting) {
+    shooting.x += shooting.vx * dt; shooting.y += shooting.vy * dt; shooting.life -= dt * 0.9;
+    if (shooting.life <= 0) shooting = null;
+    else {
+      ctx.strokeStyle = `rgba(255,250,220,${(shooting.life * 0.8).toFixed(2)})`;
+      ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(shooting.x, shooting.y);
+      ctx.lineTo(shooting.x - shooting.vx * 0.13, shooting.y - shooting.vy * 0.13);
+      ctx.stroke();
+    }
+  }
+
+  updateShower(now, dt);
+  if (!isLocked(save.cur)) drawConstellation(now);
+
+  for (let i = flights.length - 1; i >= 0; i--) {
+    const fl = flights[i];
+    const t = clamp((now - fl.t0) / 1800, 0, 1);
+    let tx, ty;
+    if (fl.slot >= 0) { const sp2 = slotPos(fl.slot); tx = sp2.x; ty = sp2.y; }
+    else { tx = fl.sx + 40; ty = -30; }
+    const e = easeInOut(t);
+    const mx = lerp(fl.sx, tx, e), my = lerp(fl.sy, ty, e) - Math.sin(t * Math.PI) * H * 0.09;
+    const sp = starSprite(p.starTint, Rp * 0.035);
+    const S2 = Rp * 0.21;
+    ctx.globalAlpha = fl.slot >= 0 ? 1 : 1 - t;
+    ctx.drawImage(sp, mx - S2 / 2, my - S2 / 2, S2, S2);
+    ctx.globalAlpha = 1;
+    if (t >= 1) { starArrive(fl); flights.splice(i, 1); }
+  }
+
+  const rad = Rp * 1.45;
+  const locked = isLocked(save.cur);
+  if (locked) ctx.globalAlpha = 0.45;
+  ctx.drawImage(planetSprite, PC.x - rad, PC.y - rad, rad * 2, rad * 2);
+  if (locked) {
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(6,6,24,.45)';
+    ctx.beginPath(); ctx.arc(PC.x, PC.y, Rp + 1, 0, TAU); ctx.fill();
+  }
+
+  drawGreatTree(now);
+  updateFruits(now);
+  for (const pl of plants) drawPlant(pl, now);
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+    pt.life -= dt;
+    if (pt.life <= 0) { particles.splice(i, 1); continue; }
+    if (pt.kind === 'dust') {
+      pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy += 12 * dt;
+      ctx.globalAlpha = clamp(pt.life, 0, 1);
+      ctx.fillStyle = pt.tint;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 1.8, 0, TAU); ctx.fill();
+    } else if (pt.kind === 'mote') {
+      pt.x += pt.vx * dt; pt.y += pt.vy * dt;
+      ctx.globalAlpha = clamp(pt.life / 2.4, 0, 1) * 0.8;
+      ctx.fillStyle = pt.tint;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 1.4, 0, TAU); ctx.fill();
+    } else if (pt.kind === 'ripple') {
+      const k = 1 - pt.life / 0.7;
+      ctx.globalAlpha = pt.life;
+      ctx.strokeStyle = 'rgba(255,245,220,.7)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r0 + k * 26, 0, TAU); ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  requestAnimationFrame(frame);
+}
+
+resize();
+loadPlanet();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
