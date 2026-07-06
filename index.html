@@ -248,7 +248,7 @@ const PLANETS = [
     chordDur: 4.3, constellation: LYRE,
   },
   {
-    name: 'ルーチェ', music: 'ドビュッシーの月の光に寄せて', constName: '桜座 ルナリア', unlock: 40,
+    name: 'ルーチェ', music: 'ドビュッシーの月の光に寄せて', constName: '桜座 ルナリア', unlock: 100,
     sky: ['#1c2138', '#3a415f', '#0d0f22'],
     nebula: ['rgba(200,210,255,alpha)', 'rgba(255,190,220,alpha)', 'rgba(180,160,255,alpha)'],
     planetCol: { light: '#f7f3ea', base: '#c2bccb', dark: '#4e4a6a', atmo: 'rgba(220,220,255,' },
@@ -259,7 +259,7 @@ const PLANETS = [
     chordDur: 4.8, constellation: SAKURA,
   },
   {
-    name: 'コメータ', music: 'ヴィヴァルディの春に寄せて', constName: 'ロケット座 エスペランサ', unlock: 120,
+    name: 'コメータ', music: 'ヴィヴァルディの春に寄せて', constName: 'ロケット座 エスペランサ', unlock: 300,
     sky: ['#1e3040', '#3e5a4e', '#151230'],
     nebula: ['rgba(255,210,110,alpha)', 'rgba(110,230,180,alpha)', 'rgba(255,140,120,alpha)'],
     planetCol: { light: '#fbeecb', base: '#d1a06a', dark: '#5e3a34', atmo: 'rgba(255,220,150,' },
@@ -339,7 +339,7 @@ try {
   if (raw) { const s = JSON.parse(raw); if (s && Array.isArray(s.planets)) save = s; }
 } catch (e) {}
 while (save.planets.length < PLANETS.length) save.planets.push({ plants: [], filled: 0, complete: false });
-for (const ps of save.planets) if (!ps.gt) ps.gt = { stage: 0, last: '' };
+for (const ps of save.planets) { if (!ps.gt) ps.gt = { stage: 0, last: '' }; if (ps.ms == null) ps.ms = 0; }
 if (save.cur > PLANETS.length) save.cur = 0;
 if (!save.disc) save.disc = {};
 if (!save.stats) save.stats = { blooms: 0, dailyLit: 0 };
@@ -647,12 +647,42 @@ function buildScene(p) {
       col: p.nebula[i % p.nebula.length], ph: brng() * TAU, sp: 0.5 + brng() * 0.8,
     });
   }
+  // 星霜の再構築
+  msStars = [];
+  const msN = save.cur < PLANETS.length ? (save.planets[save.cur].ms || 0) : 0;
+  for (let i = 0; i < msN; i++) msStars.push(msPos(i));
+}
+
+// ---------------- 星霜（満ちた空に永く積もる小さな星）----------------
+let msStars = [];
+function msPos(i) {
+  const rng = mulberry32((save.cur + 1) * 77777 + i * 131 + 7);
+  return { x: rng() * W, y: rng() * H * 0.52, r: 0.8 + rng() * 1.1, ph: rng() * TAU, sp: 0.4 + rng() * 1.2 };
+}
+function launchMs(sx, sy) {
+  if (save.cur >= PLANETS.length) return; // 日替わりの星は一夜かぎりなので積もらない
+  const st = curState();
+  if (!st.complete) return; // 星霜は「灯りきった空」にだけ積もる
+  const idx = (st.ms || 0) + flights.filter(f => f.slot === -2).length;
+  const tp = msPos(idx);
+  flights.push({ sx, sy, slot: -2, t0: performance.now(), tx: tp.x, ty: tp.y });
+}
+function msArrive() {
+  const st = curState();
+  st.ms = (st.ms || 0) + 1;
+  msStars.push(msPos(st.ms - 1));
+  discover('ms_first');
+  if (st.ms >= 100) discover('ms_100');
+  if (st.ms % 25 === 0) toast(`✧ 星霜 ${st.ms} ─ 空があなたの季節を憶えていく`);
+  const ch = curPlanet().prog[0];
+  Audio2.bell(Audio2.freq(ch[ch.length - 1], 2), 0.07, 2);
+  persist();
 }
 
 // ---------------- 実行時状態 ----------------
 let plants = [];       // {a, seed, born(ms) | done, tree}
 let particles = [];    // 花びら・光の粒
-let flights = [];      // 星のかけらの飛翔 {sx,sy,slot,t0}
+let flights = [];      // 星のかけらの飛翔 {sx,sy,slot,t0}（slot -1=消える光, -2=星霜行き）
 let shooting = null;
 let rot = 0, chordIdx = 0, nextChordAt = 0, bannerShown = false;
 
@@ -734,6 +764,10 @@ const DISCOVERIES = [
   { id: 'daily_first', k: '日', name: '今日の星', hint: '日替わりの星に星座を灯そう', desc: '一夜かぎりの星座を、はじめて灯した。' },
   { id: 'full_garden', k: '満', name: '満開の庭', hint: 'ひとつの星を花で満たそう', desc: '9本の木が、咲きそろった。' },
   { id: 'all_const', k: '天', name: '五つの星座', hint: 'すべての星の空に星座を', desc: '五つの空に、五つの物語が生まれた。' },
+  { id: 'ms_first', k: '霜', name: '星霜', hint: '灯りきった空に、なお光は昇る', desc: '満ちた星座の空へ、光がのぼって小さな星になった。' },
+  { id: 'ms_100', k: '百', name: '星霜百景', hint: 'ひとつの空に星霜を百', desc: '百の小さな星が、あなたの過ごした季節を憶えている。' },
+  { id: 'gt_ring', k: '輪', name: '大樹の年輪', hint: '完成した大樹を、さらに十二夜', desc: '大樹は終わらない。年輪がひとつ、天に刻まれた。' },
+  { id: 'gt_elder', k: '齢', name: '老樹', hint: '年輪を五つ重ねよう', desc: '七十二夜を超えて、老樹は星々と語りはじめた。' },
 ];
 function discover(id) {
   if (save.disc[id]) return;
@@ -832,6 +866,8 @@ function bloomFlower(pl, f) {
   const pending = flights.filter(fl => fl.slot >= 0).length;
   if (st.filled + pending < nSlots && (pl.tree.stellar || Math.random() < 0.3)) {
     flights.push({ sx: pos.x, sy: pos.y, slot: st.filled + pending, t0: performance.now() });
+  } else if (st.complete && save.cur < PLANETS.length) {
+    launchMs(pos.x, pos.y); // 満ちた空へは星霜として積もる
   } else {
     flights.push({ sx: pos.x, sy: pos.y, slot: -1, t0: performance.now() });
   }
@@ -867,6 +903,7 @@ function tryHarvest(px, py) {
       for (let i = 0; i < 12; i++) {
         particles.push({ kind: 'dust', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 90, vy: -20 - Math.random() * 70, life: 1.2, tint: '#ffe9a0' });
       }
+      launchMs(pos.x, pos.y); // 果実の光も星霜になる
       updateCounter(); persist();
       return true;
     }
@@ -968,8 +1005,9 @@ function shedPetals(pl, p, gold) {
 let greatTree = null;
 function gtProg(stage) { return lerp(0.07, 1, clamp(stage / GT_MAX, 0, 1)); }
 function gtCanGrow() {
-  return greatTree && greatTree.st.gt.stage < GT_MAX && greatTree.st.gt.last !== todayStr();
+  return greatTree && greatTree.st.gt.last !== todayStr(); // 完成後も年輪として育ちつづける
 }
+function gtRings(stage) { return Math.max(0, Math.floor((stage - GT_MAX) / 12)); }
 function gtProgress(now) {
   if (!greatTree) return 0;
   const to = gtProg(greatTree.st.gt.stage);
@@ -981,7 +1019,8 @@ function loadGreatTree() {
   greatTree = null;
   if (save.cur >= PLANETS.length || isLocked(save.cur)) return;
   const st = save.planets[save.cur];
-  const tree = genTree(100003 + save.cur * 7919, Rp * 1.6, 'tree');
+  const scale = 1 + Math.min(gtRings(st.gt.stage), 8) * 0.035; // 年輪ごとにひとまわり大きく
+  const tree = genTree(100003 + save.cur * 7919, Rp * 1.6 * scale, 'tree');
   tree.stellar = false;
   for (const f of tree.flowers) f.bloomed = gtProg(st.gt.stage) >= f.t;
   greatTree = { a: -rot, tree, st, animFrom: gtProg(st.gt.stage), animAt: 0 };
@@ -993,11 +1032,12 @@ function tryNurture(px, py) {
   const mid = worldOf(greatTree.a, 0, -tree.h * prog * 0.5);
   if (Math.hypot(px - mid.x, py - mid.y) > Math.max(Rp * 0.42, tree.h * prog * 0.55)) return false;
   const p = curPlanet();
-  if (st.gt.stage >= GT_MAX) {
-    Audio2.bell(Audio2.freq(p.prog[0][0], 1), 0.1, 2.4);
+  if (st.gt.last === todayStr()) {
+    Audio2.bell(Audio2.freq(p.prog[0][0], 1), 0.08, 2);
+    toast('大樹は今日のぶん、もう育ちました ─ また明日');
     return true;
   }
-  if (st.gt.last === todayStr()) { toast('大樹は今日のぶん、もう育ちました ─ また明日'); return true; }
+  const wasComplete = st.gt.stage >= GT_MAX;
   greatTree.animFrom = gtProg(st.gt.stage);
   greatTree.animAt = performance.now();
   st.gt.stage++; st.gt.last = todayStr();
@@ -1006,9 +1046,9 @@ function tryNurture(px, py) {
   Audio2.bell(Audio2.freq(p.prog[0][0], 0), 0.14, 2.6);
   const base = worldOf(greatTree.a, 0, -tree.h * gtProg(st.gt.stage) * 0.4);
   for (let i = 0; i < 10; i++) {
-    particles.push({ kind: 'dust', x: base.x, y: base.y, vx: (Math.random() - .5) * 60, vy: -20 - Math.random() * 50, life: 1.1, tint: '#d8f0b0' });
+    particles.push({ kind: 'dust', x: base.x, y: base.y, vx: (Math.random() - .5) * 60, vy: -20 - Math.random() * 50, life: 1.1, tint: wasComplete ? '#ffedb8' : '#d8f0b0' });
   }
-  if (st.gt.stage >= GT_MAX) {
+  if (!wasComplete && st.gt.stage >= GT_MAX) {
     discover('gt_full');
     save.total += 25;
     setTimeout(() => {
@@ -1019,6 +1059,27 @@ function tryNurture(px, py) {
       Audio2.arpeggio(curPlanet().prog[0]);
       setTimeout(() => b.classList.remove('show'), 5200);
     }, 900);
+  } else if (wasComplete) {
+    // 年輪の夜：完成後も一日一度、齢を重ねる。梢の光は星霜へ
+    const top = worldOf(greatTree.a, 0, -tree.h);
+    launchMs(top.x, top.y);
+    if ((st.gt.stage - GT_MAX) % 12 === 0) {
+      save.total += 10;
+      discover('gt_ring');
+      if (st.gt.stage >= GT_MAX + 60) discover('gt_elder');
+      setTimeout(() => {
+        const b = document.getElementById('banner');
+        b.querySelector('.t').textContent = '年 輪';
+        b.querySelector('.s').textContent = `齢 ${st.gt.stage}夜 ─ ✦10の祝福`;
+        b.classList.add('show');
+        Audio2.arpeggio(curPlanet().prog[0]);
+        setTimeout(() => b.classList.remove('show'), 5200);
+      }, 900);
+      persist();
+      loadGreatTree(); // 年輪ぶん大きくなった姿へ
+    } else {
+      toast(`🌟 大樹の齢が深まる ─ ${st.gt.stage}夜`);
+    }
   } else {
     toast(`🌱 大樹が育ちました ─ ${st.gt.stage} / ${GT_MAX}`);
   }
@@ -1080,7 +1141,7 @@ function drawGreatTree(now) {
   }
   if (gtCanGrow()) {
     const r = Rp * 0.045 * (1 + 0.25 * Math.sin(now / 380));
-    const sp = starSprite('#d8ffc8', Rp * 0.04);
+    const sp = starSprite(complete ? '#ffe9a0' : '#d8ffc8', Rp * 0.04);
     ctx.drawImage(sp, -r * 3, -tree.h * progress - Rp * 0.05 - r * 3, r * 6, r * 6);
   }
   ctx.restore();
@@ -1186,7 +1247,7 @@ let switching = false;
 function switchPlanet(dir) {
   if (switching) return;
   switching = true;
-  for (const fl of flights) if (fl.slot >= 0) starArrive(fl);
+  for (const fl of flights) { if (fl.slot >= 0) starArrive(fl); else if (fl.slot === -2) msArrive(); }
   flights = [];
   fadeEl.classList.add('on');
   setTimeout(() => {
@@ -1240,7 +1301,12 @@ function buildBookScene() {
   const rng = mulberry32(4242);
   const dots = [];
   for (let i = 0; i < 42; i++) dots.push({ x: rng() * cw, y: rng() * ch * 0.55, r: 0.5 + rng() * 0.9, ph: rng() * TAU, sp: 0.5 + rng() * 1.4 });
-  bookScene = { cw, ch, specs, dots, petals: [] };
+  // 星霜（金の点）─ 集めた総数に応じて図鑑の空も賑やかになっていく
+  const msTotal = save.planets.reduce((s, ps) => s + (ps.ms || 0), 0);
+  const grng = mulberry32(9999);
+  const golds = [];
+  for (let i = 0; i < Math.min(msTotal, 80); i++) golds.push({ x: grng() * cw, y: grng() * ch * 0.5, r: 0.6 + grng() * 0.8, ph: grng() * TAU, sp: 0.4 + grng() * 1.1 });
+  bookScene = { cw, ch, specs, dots, golds, petals: [] };
 }
 
 function drawBookConst(c, i, bx, by, bw, bh, now) {
@@ -1280,7 +1346,7 @@ function drawBookConst(c, i, bx, by, bw, bh, now) {
   c.textAlign = 'center';
   c.fillText(locked ? '？？？' : p.name, bx + bw / 2, by + bh + 11);
   if (!locked && !st.complete) c.fillText(`${st.filled} / ${C.stars.length}`, bx + bw / 2, by + bh + 22);
-  if (st.complete) c.fillText('─ 灯った ─', bx + bw / 2, by + bh + 22);
+  if (st.complete) c.fillText(`星霜 ${st.ms || 0}`, bx + bw / 2, by + bh + 22);
 }
 
 function drawMiniTree(c, spec, now) {
@@ -1320,7 +1386,7 @@ function drawMiniTree(c, spec, now) {
 
 function drawBook(now) {
   if (!bookScene) return;
-  const { cw, ch, specs, dots, petals } = bookScene;
+  const { cw, ch, specs, dots, golds, petals } = bookScene;
   const c = bookCanvas.getContext('2d');
   c.setTransform(DPR, 0, 0, DPR, 0, 0);
   const g = c.createLinearGradient(0, 0, 0, ch);
@@ -1329,6 +1395,11 @@ function drawBook(now) {
   for (const d of dots) {
     c.globalAlpha = 0.2 + 0.5 * (0.5 + 0.5 * Math.sin(now / 1000 * d.sp + d.ph));
     c.fillStyle = '#fff';
+    c.beginPath(); c.arc(d.x, d.y, d.r, 0, TAU); c.fill();
+  }
+  c.fillStyle = '#ffe9b0';
+  for (const d of golds) {
+    c.globalAlpha = 0.3 + 0.45 * (0.5 + 0.5 * Math.sin(now / 1400 * d.sp + d.ph));
     c.beginPath(); c.arc(d.x, d.y, d.r, 0, TAU); c.fill();
   }
   c.globalAlpha = 1;
@@ -1395,8 +1466,11 @@ function bookLoop(ts) {
 document.getElementById('bookBtn').addEventListener('click', () => {
   const found = DISCOVERIES.filter(d => save.disc[d.id]).length;
   const nextLocked = PLANETS.find((p, i) => isLocked(i));
+  const msTotal = save.planets.reduce((s, ps) => s + (ps.ms || 0), 0);
+  const gtTotal = save.planets.reduce((s, ps) => s + (ps.gt ? ps.gt.stage : 0), 0);
   document.getElementById('bookStats').innerHTML =
     `✦ ${save.total}　／　咲いた花 ${save.stats.blooms}　／　発見 ${found}/${DISCOVERIES.length}` +
+    `<br>星霜 ${msTotal}　／　大樹の齢 ${gtTotal}夜` +
     (nextLocked ? `<br>つぎの星「？？？」まで ✦ あと ${nextLocked.unlock - save.total}` : '');
   const rows = document.getElementById('bookRows');
   rows.innerHTML = '';
@@ -1555,6 +1629,12 @@ function frame(now) {
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(tw.x, tw.y, tw.r, 0, TAU); ctx.fill();
   }
+  // 星霜（積もった小さな星）
+  ctx.fillStyle = '#ffeec8';
+  for (const s of msStars) {
+    ctx.globalAlpha = 0.3 + 0.45 * (0.5 + 0.5 * Math.sin(now / 1400 * s.sp + s.ph));
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
+  }
   ctx.globalAlpha = 1;
 
   if (!shooting && Math.random() < 0.0012) {
@@ -1581,15 +1661,20 @@ function frame(now) {
     const t = clamp((now - fl.t0) / 1800, 0, 1);
     let tx, ty;
     if (fl.slot >= 0) { const sp2 = slotPos(fl.slot); tx = sp2.x; ty = sp2.y; }
+    else if (fl.slot === -2) { tx = fl.tx; ty = fl.ty; }
     else { tx = fl.sx + 40; ty = -30; }
     const e = easeInOut(t);
     const mx = lerp(fl.sx, tx, e), my = lerp(fl.sy, ty, e) - Math.sin(t * Math.PI) * H * 0.09;
     const sp = starSprite(p.starTint, Rp * 0.035);
-    const S2 = Rp * 0.21;
-    ctx.globalAlpha = fl.slot >= 0 ? 1 : 1 - t;
+    const S2 = fl.slot === -2 ? Rp * 0.15 : Rp * 0.21;
+    ctx.globalAlpha = fl.slot === -1 ? 1 - t : 1;
     ctx.drawImage(sp, mx - S2 / 2, my - S2 / 2, S2, S2);
     ctx.globalAlpha = 1;
-    if (t >= 1) { starArrive(fl); flights.splice(i, 1); }
+    if (t >= 1) {
+      if (fl.slot >= 0) starArrive(fl);
+      else if (fl.slot === -2) msArrive();
+      flights.splice(i, 1);
+    }
   }
 
   const rad = Rp * 1.45;
