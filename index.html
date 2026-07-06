@@ -15,22 +15,26 @@
   }
   #game { position: fixed; inset: 0; display: block; }
 
-  .ui { position: fixed; z-index: 10; color: #e8dcb8; pointer-events: none; }
+  .ui { position: fixed; z-index: 10; color: #e8dcb8; pointer-events: none; text-shadow: 0 1px 4px rgba(4,3,16,.9), 0 0 10px rgba(4,3,16,.55); }
+  .scrim { position: fixed; left: 0; right: 0; z-index: 5; pointer-events: none; transition: opacity .8s; }
+  #scrimTop { top: 0; height: 110px; background: linear-gradient(rgba(5,4,18,.5), rgba(5,4,18,0)); }
+  #scrimBottom { bottom: 0; height: 175px; background: linear-gradient(rgba(5,4,18,0), rgba(5,4,18,.72)); }
+  body.zen .scrim { opacity: 0; }
   #header {
     top: calc(env(safe-area-inset-top, 0px) + 14px); left: 0; right: 0; text-align: center;
   }
-  #header h1 { font-size: 20px; font-weight: 500; letter-spacing: .5em; text-indent: .5em; text-shadow: 0 0 14px rgba(255,230,170,.35); }
+  #header h1 { font-size: 20px; font-weight: 500; letter-spacing: .5em; text-indent: .5em; text-shadow: 0 0 14px rgba(255,230,170,.35), 0 1px 4px rgba(4,3,16,.9); }
   #header .sub { font-size: 9px; letter-spacing: .55em; text-indent: .55em; opacity: .55; margin-top: 4px; }
 
   #counter {
     top: calc(env(safe-area-inset-top, 0px) + 14px); right: 16px;
-    font-size: 15px; letter-spacing: .1em; text-shadow: 0 0 10px rgba(255,230,170,.5);
+    font-size: 15px; letter-spacing: .1em; text-shadow: 0 0 10px rgba(255,230,170,.5), 0 1px 4px rgba(4,3,16,.9);
   }
   #muteBtn {
     top: calc(env(safe-area-inset-top, 0px) + 10px); left: 14px;
     pointer-events: auto; cursor: pointer;
     width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid rgba(232,220,184,.4); background: rgba(20,16,50,.45);
+    border: 1px solid rgba(232,220,184,.4); background: rgba(12,10,36,.6);
     color: #e8dcb8; font-size: 15px; line-height: 32px; text-align: center;
   }
 
@@ -41,11 +45,11 @@
   #nav button {
     pointer-events: auto; cursor: pointer;
     width: 38px; height: 38px; border-radius: 50%;
-    border: 1px solid rgba(232,220,184,.4); background: rgba(20,16,50,.45);
+    border: 1px solid rgba(232,220,184,.4); background: rgba(12,10,36,.6);
     color: #e8dcb8; font-size: 14px; font-family: inherit;
   }
   #planetName { text-align: center; min-width: 190px; }
-  #planetName .n { font-size: 16px; letter-spacing: .3em; text-indent: .3em; text-shadow: 0 0 12px rgba(255,230,170,.35); }
+  #planetName .n { font-size: 16px; letter-spacing: .3em; text-indent: .3em; text-shadow: 0 0 12px rgba(255,230,170,.35), 0 1px 4px rgba(4,3,16,.9); }
   #planetName .m { font-size: 10px; letter-spacing: .2em; opacity: .6; margin-top: 3px; }
   #planetName .d { font-size: 10px; letter-spacing: .3em; opacity: .5; margin-top: 4px; }
 
@@ -53,7 +57,7 @@
     top: calc(env(safe-area-inset-top, 0px) + 52px); left: 14px;
     pointer-events: auto; cursor: pointer;
     width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid rgba(232,220,184,.4); background: rgba(20,16,50,.45);
+    border: 1px solid rgba(232,220,184,.4); background: rgba(12,10,36,.6);
     color: #e8dcb8; font-size: 14px; line-height: 32px; text-align: center;
     transition: opacity .8s;
   }
@@ -64,7 +68,7 @@
     top: calc(env(safe-area-inset-top, 0px) + 94px); left: 14px;
     pointer-events: auto; cursor: pointer;
     width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid rgba(232,220,184,.4); background: rgba(20,16,50,.45);
+    border: 1px solid rgba(232,220,184,.4); background: rgba(12,10,36,.6);
     color: #e8dcb8; font-size: 13px; line-height: 32px; text-align: center;
   }
   #book {
@@ -77,8 +81,10 @@
     background: rgba(18,14,44,.94); border: 1px solid rgba(232,220,184,.4); border-radius: 14px;
     color: #e8dcb8;
   }
-  #bookInner h2 { font-size: 18px; font-weight: 500; letter-spacing: .5em; text-indent: .5em; text-align: center; margin-bottom: 10px; }
-  #bookStats { text-align: center; font-size: 11px; letter-spacing: .15em; opacity: .7; margin-bottom: 16px; }
+  #bookInner h2 { font-size: 18px; font-weight: 500; letter-spacing: .5em; text-indent: .5em; text-align: center; margin-bottom: 8px; }
+  #bookGoal { text-align: center; font-size: 11px; letter-spacing: .18em; opacity: .75; margin-bottom: 12px; line-height: 1.7; }
+  #bookCanvas { display: block; width: 100%; border-radius: 10px; margin-bottom: 14px; border: 1px solid rgba(232,220,184,.18); }
+  #bookStats { text-align: center; font-size: 11px; letter-spacing: .15em; opacity: .7; margin-bottom: 16px; line-height: 1.8; }
   .disc { display: flex; align-items: center; gap: 14px; padding: 9px 4px; border-bottom: 1px solid rgba(232,220,184,.14); }
   .disc .medal {
     flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%;
@@ -107,7 +113,7 @@
     opacity: 0; transition: opacity 1.6s;
   }
   #banner.show { opacity: 1; }
-  #banner .t { font-size: 22px; letter-spacing: .45em; text-indent: .45em; color: #ffe9b0; text-shadow: 0 0 22px rgba(255,220,140,.8); }
+  #banner .t { font-size: 22px; letter-spacing: .45em; text-indent: .45em; color: #ffe9b0; text-shadow: 0 0 22px rgba(255,220,140,.8), 0 1px 5px rgba(4,3,16,.9); }
   #banner .s { font-size: 11px; letter-spacing: .3em; opacity: .75; margin-top: 8px; }
 
   #toast {
@@ -122,6 +128,8 @@
 </head>
 <body>
 <canvas id="game"></canvas>
+<div class="scrim" id="scrimTop"></div>
+<div class="scrim" id="scrimBottom"></div>
 
 <div class="ui" id="header"><h1>星の庭</h1><div class="sub">STELLA BOTANICA</div></div>
 <div class="ui" id="counter">✦ <span id="starCount">0</span></div>
@@ -132,6 +140,8 @@
 <div id="book">
   <div id="bookInner">
     <h2>発見の記</h2>
+    <div id="bookGoal">五つの空に星座を灯し、十二夜をかけて大樹を育てる<br>─ あなたの庭の、すべての発見がここに集まる ─</div>
+    <canvas id="bookCanvas"></canvas>
     <div id="bookStats"></div>
     <div id="bookRows"></div>
     <button id="closeBook">とじる</button>
@@ -310,7 +320,15 @@ function ensureDaily() {
 function curPlanet() { return save.cur === PLANETS.length ? DAILY : PLANETS[save.cur]; }
 function curState() { return save.cur === PLANETS.length ? save.daily : save.planets[save.cur]; }
 const MAX_PLANTS = 9;
-const GROW_SEC = 16;
+const GROW_MS = 5 * 3600 * 1000;   // 通常の星：5時間（実時間）かけて育つ
+const GROW_MS_DAILY = 45 * 1000;   // 日替わりの星：一夜かぎりなので45秒
+const GROW_FAST_MS = 180 * 1000, GROW_HEAD = 0.22; // 最初の3分で22%まで（芽吹きと最初の花はその場で見られる）
+function plantDur() { return curPlanet().isDaily ? GROW_MS_DAILY : GROW_MS; }
+function growProgress(elapsed, dur) {
+  if (dur < 600e3) return clamp(elapsed / dur, 0, 1);
+  if (elapsed < GROW_FAST_MS) return clamp(GROW_HEAD * elapsed / GROW_FAST_MS, 0, GROW_HEAD);
+  return clamp(GROW_HEAD + (1 - GROW_HEAD) * (elapsed - GROW_FAST_MS) / (dur - GROW_FAST_MS), 0, 1);
+}
 const GT_MAX = 12; // 大樹は十二夜で完成
 
 // ---------------- セーブ ----------------
@@ -390,6 +408,20 @@ const Audio2 = {
   bellForce(f, v) { this.lastNote = 0; this.bell(f, v); },
   setMuted(m) { if (this.master) this.master.gain.value = m ? 0 : 0.9; },
 };
+
+// 和音に寄り添う自動の旋律（薄く・まばらに。ときどき休符の小節）
+function scheduleMelody(chord, dur) {
+  if (Math.random() < 0.3) return;
+  const n = 1 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const at = (0.15 + Math.random() * 0.72) * dur * 1000;
+    const s = chord[Math.floor(Math.random() * chord.length)] + (Math.random() < 0.25 ? 12 : 0);
+    setTimeout(() => {
+      if (!Audio2.ready || save.muted || document.hidden) return;
+      Audio2.bellForce(Audio2.freq(s, 1), 0.045 + Math.random() * 0.035);
+    }, at);
+  }
+}
 
 // ---------------- 植物の生成（シード決定論的）----------------
 // 樹形: tree(立ち木) / weeping(しだれ) / bamboo(星竹)。まれに stellar(星の花・白金)
@@ -500,6 +532,18 @@ function flowerSprite(hue, r, petals) {
   spriteCache.set(key, cv);
   return cv;
 }
+function glowSprite(tint) {
+  const key = 'g' + tint;
+  if (spriteCache.has(key)) return spriteCache.get(key);
+  const S = 24;
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const c = cv.getContext('2d'); const m = S / 2;
+  const g = c.createRadialGradient(m, m, 0, m, m, m);
+  g.addColorStop(0, '#fffce8'); g.addColorStop(0.3, tint); g.addColorStop(1, 'rgba(255,240,200,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(m, m, m, 0, TAU); c.fill();
+  spriteCache.set(key, cv);
+  return cv;
+}
 function starSprite(tint, r) {
   const key = `s${tint}|${Math.round(r)}`;
   if (spriteCache.has(key)) return spriteCache.get(key);
@@ -526,7 +570,7 @@ function starSprite(tint, r) {
 }
 
 // ---------------- 背景・惑星（オフスクリーン描画）----------------
-let backdrop = null, planetSprite = null, twinkles = [];
+let backdrop = null, planetSprite = null, twinkles = [], breathSpots = [];
 function buildScene(p) {
   backdrop = document.createElement('canvas');
   backdrop.width = W * DPR; backdrop.height = H * DPR;
@@ -594,6 +638,15 @@ function buildScene(p) {
   for (let i = 0; i < 46; i++) {
     twinkles.push({ x: trng() * W, y: trng() * H * 0.8, r: 0.8 + trng() * 1.3, ph: trng() * TAU, sp: 0.6 + trng() * 1.6 });
   }
+  // 星雲の呼吸（ゆっくり明滅する光だまり）
+  breathSpots = [];
+  const brng = mulberry32((p.sceneSeed ?? save.cur) * 53 + 11);
+  for (let i = 0; i < 3; i++) {
+    breathSpots.push({
+      x: brng() * W, y: brng() * H * 0.55, r: (0.22 + brng() * 0.26) * Math.max(W, H),
+      col: p.nebula[i % p.nebula.length], ph: brng() * TAU, sp: 0.5 + brng() * 0.8,
+    });
+  }
 }
 
 // ---------------- 実行時状態 ----------------
@@ -614,10 +667,29 @@ function loadPlanet() {
   const st = curState();
   plants = st.plants.map(pd => {
     const tree = genTree(pd.seed, Rp);
-    for (const f of tree.flowers) f.bloomed = true;
-    return { a: pd.a, seed: pd.seed, done: true, born: 0, tree, fruitIdx: -1, fruitAt: performance.now() + 6000 + Math.random() * 12000 };
+    const dur = plantDur();
+    let done = true, born = 0;
+    if (pd.t == null) {
+      // 旧セーブ（植えた時刻なし）は成木として扱う
+      for (const f of tree.flowers) f.bloomed = true;
+    } else {
+      if (pd.bc == null) pd.bc = 0;
+      const elapsed = Math.max(0, Date.now() - pd.t);
+      done = elapsed >= dur;
+      born = performance.now() - Math.min(elapsed, dur);
+      // 留守のあいだに時が満ちた花：記録済みの数は静かに開花済みに、
+      // 新しいぶんは「おかえりの開花」として順に咲く（✦もそのとき入る）
+      const sorted = [...tree.flowers].sort((x, y) => x.t - y.t);
+      const progress = growProgress(elapsed, dur);
+      let wait = 0;
+      sorted.forEach((f, i) => {
+        if (i < pd.bc) f.bloomed = true;
+        else if (f.t <= progress) f.dueAt = performance.now() + 1400 + (wait++) * 1000 * (0.7 + Math.random() * 0.7);
+      });
+    }
+    return { a: pd.a, seed: pd.seed, done, born, tree, dur, rec: pd, fruitIdx: -1, fruitAt: performance.now() + 6000 + Math.random() * 12000 };
   });
-  particles = []; flights = []; showerStars = []; shooting = null;
+  particles = []; flights = []; showerStars = []; shooting = null; fireflies = [];
   chordIdx = 0; nextChordAt = 0; bannerShown = st.complete;
   const p = curPlanet();
   buildScene(p);
@@ -712,9 +784,14 @@ function plantSeed(px, py) {
   const a = Math.atan2(dx, -dy) - rot;
   const seed = (Math.random() * 1e9) | 0;
   const tree = genTree(seed, Rp);
-  plants.push({ a, seed, born: performance.now(), done: false, tree });
-  st.plants.push({ a, seed });
+  const rec = { a, seed, t: Date.now(), bc: 0 };
+  plants.push({ a, seed, born: performance.now(), done: false, tree, dur: plantDur(), rec });
+  st.plants.push(rec);
   persist();
+  if (!curPlanet().isDaily && !plantSeed.hinted) {
+    plantSeed.hinted = true;
+    setTimeout(() => toast('種は五時間かけてゆっくり育つ ─ ときどき会いに来てあげて'), 1600);
+  }
   const base = worldOf(a, 0, 0);
   for (let i = 0; i < 8; i++) {
     particles.push({ kind: 'dust', x: base.x, y: base.y, vx: (Math.random() - .5) * 40, vy: -20 - Math.random() * 40, life: 0.9, tint: '#cfe8a0' });
@@ -741,6 +818,7 @@ function bloomFlower(pl, f) {
   const pos = worldOf(pl.a, f.x, f.y);
   const p = curPlanet();
   save.stats.blooms++;
+  if (pl.rec) pl.rec.bc = (pl.rec.bc || 0) + 1;
   const chord = p.prog[chordIdx % p.prog.length];
   const s = chord[Math.floor(Math.random() * chord.length)];
   const fq = Audio2.freq(s, Math.random() < 0.5 ? 1 : 2);
@@ -843,6 +921,47 @@ function tryCatchStar(px, py) {
     }
   }
   return false;
+}
+
+// ---------------- 蛍火（咲いた庭にただよう光）----------------
+let fireflies = [];
+function updateFireflies(now, dt) {
+  const bloomTrees = plants.filter(pl => pl.done).length + (greatTree && greatTree.st.gt.stage > 0 ? 1 : 0);
+  const target = isLocked(save.cur) ? 0 : Math.min(9, bloomTrees * 2);
+  if (fireflies.length < target && Math.random() < 0.02) {
+    fireflies.push({
+      x: PC.x + (Math.random() - .5) * Rp * 1.8, y: PC.y - Rp * (0.75 + Math.random() * 0.6),
+      vx: 0, vy: 0, ph: Math.random() * TAU, sp: 0.5 + Math.random(),
+    });
+  }
+  if (fireflies.length > target && Math.random() < 0.01) fireflies.pop();
+  const hx = PC.x, hy = PC.y - Rp * 1.1;
+  for (const f of fireflies) {
+    f.vx += ((Math.random() - .5) * 34 + (hx - f.x) * 0.10) * dt;
+    f.vy += ((Math.random() - .5) * 34 + (hy - f.y) * 0.10) * dt;
+    f.vx *= 1 - 0.35 * dt; f.vy *= 1 - 0.35 * dt;
+    f.x += f.vx * dt; f.y += f.vy * dt;
+    const al = 0.15 + 0.6 * (0.5 + 0.5 * Math.sin(now / 620 * f.sp + f.ph));
+    const S = 7 + 3 * Math.sin(now / 620 * f.sp + f.ph);
+    ctx.globalAlpha = al;
+    ctx.drawImage(glowSprite('#ffe9a8'), f.x - S / 2, f.y - S / 2, S, S);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ---------------- 舞い散る花びら ----------------
+function shedPetals(pl, p, gold) {
+  if (!pl.done || !pl.tree.flowers.length || particles.length > 130) return;
+  if (Math.random() > 0.006) return;
+  const f = pl.tree.flowers[Math.floor(Math.random() * pl.tree.flowers.length)];
+  if (!f.bloomed) return;
+  const pos = worldOf(pl.a, f.x, f.y);
+  const life = 3.5 + Math.random() * 2;
+  particles.push({
+    kind: 'petal', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 12, vy: 7 + Math.random() * 13,
+    life, life0: life, hue: (gold || pl.tree.stellar) ? 48 : p.petalHues[f.hueIdx],
+    rot: Math.random() * TAU, vr: (Math.random() - .5) * 2.4, ph: Math.random() * TAU, sz: 2 + Math.random() * 1.7,
+  });
 }
 
 // ---------------- 大樹（実時間で育つ一本の木）----------------
@@ -1008,6 +1127,37 @@ function starArrive(fl) {
   persist();
 }
 
+// ---------------- 灯りを注ぐ（育ちかけの木に触れて成長を促す）----------------
+function tryPourLight(px, py) {
+  const now = performance.now();
+  for (const pl of plants) {
+    if (pl.done) continue;
+    const progress = growProgress(now - pl.born, pl.dur || GROW_MS);
+    const mid = worldOf(pl.a, 0, -pl.tree.h * progress * 0.5);
+    if (Math.hypot(px - mid.x, py - mid.y) > Math.max(Rp * 0.26, pl.tree.h * progress * 0.6)) continue;
+    if (now - (pl.lastFx || 0) < 900) return true;
+    pl.lastFx = now;
+    const p = curPlanet();
+    const chord = p.prog[chordIdx % p.prog.length];
+    Audio2.bell(Audio2.freq(chord[Math.floor(Math.random() * chord.length)], 1), 0.1, 2);
+    for (let i = 0; i < 7; i++) {
+      particles.push({ kind: 'dust', x: px, y: py, vx: (Math.random() - .5) * 50, vy: -14 - Math.random() * 40, life: 1, tint: '#fff3c8' });
+    }
+    // 灯りの祝福：ひと株につき30分に一度、成長が10分ぶん進む（日替わりの星は8秒ごとに5秒ぶん）
+    const cool = p.isDaily ? 8e3 : 30 * 60e3;
+    const boost = p.isDaily ? 5e3 : 10 * 60e3;
+    if (pl.rec && pl.rec.t != null && Date.now() - (pl.rec.lp || 0) >= cool) {
+      pl.rec.lp = Date.now();
+      pl.rec.t -= boost;
+      pl.born -= boost;
+      toast('灯りを注いだ ─ 木の時間がすこし進む');
+      persist();
+    }
+    return true;
+  }
+  return false;
+}
+
 // ---------------- 入力 ----------------
 canvas.addEventListener('pointerdown', ev => {
   Audio2.init();
@@ -1016,8 +1166,18 @@ canvas.addEventListener('pointerdown', ev => {
   if (tryCatchStar(x, y)) return;
   if (tryHarvest(x, y)) return;
   if (tryNurture(x, y)) return;
+  if (tryPourLight(x, y)) return;
   if (!plantSeed(x, y)) {
+    // 星空の楽器 ─ 空に触れると和音に調和した音が鳴る（高いほど高い音）
+    const p = curPlanet();
+    const chord = p.prog[chordIdx % p.prog.length];
+    const hi = clamp(1 - y / (H * 0.8), 0, 1);
+    const s = chord[Math.floor(hi * (chord.length - 0.001))];
+    Audio2.bell(Audio2.freq(s, hi > 0.55 ? 2 : 1), 0.09, 2.6);
     particles.push({ kind: 'ripple', x, y, life: 0.7, r0: 4 });
+    for (let i = 0; i < 3; i++) {
+      particles.push({ kind: 'mote', x: x + (Math.random() - .5) * 14, y: y + (Math.random() - .5) * 14, vx: (Math.random() - .5) * 14, vy: -8 - Math.random() * 10, life: 1.6, tint: p.starTint });
+    }
   }
 });
 
@@ -1053,12 +1213,191 @@ document.getElementById('zenBtn').addEventListener('click', () => {
   document.body.classList.toggle('zen');
 });
 
-// ---------------- 発見の記（開閉と描画）----------------
+// ---------------- 発見の記（生きたジオラマ）----------------
 const bookEl = document.getElementById('book');
+const bookCanvas = document.getElementById('bookCanvas');
+let bookRAF = 0, bookScene = null;
+
+const SPECIMENS = [
+  { id: 'arch_tree', name: '立ちの木', arch: 'tree', pi: 0, seed: 501, size: 62 },
+  { id: 'arch_weeping', name: 'しだれの木', arch: 'weeping', pi: 1, seed: 733, size: 62 },
+  { id: 'arch_bamboo', name: '星竹', arch: 'bamboo', pi: 2, seed: 907, size: 58 },
+  { id: 'stellar', name: '星の花', arch: 'tree', pi: 3, seed: 1201, size: 62, gold: true },
+  { id: 'gt_full', name: '大樹', arch: 'tree', pi: 4, seed: 1409, size: 82, gold: true, aura: true },
+];
+
+function buildBookScene() {
+  const cw = Math.max(280, bookCanvas.clientWidth || 380);
+  const ch = 330;
+  bookCanvas.width = cw * DPR; bookCanvas.height = ch * DPR;
+  bookCanvas.style.height = ch + 'px';
+  const specs = SPECIMENS.map((d, i) => {
+    const tree = genTree(d.seed, d.size, d.arch);
+    for (const f of tree.flowers) f.bloomed = true;
+    const x = cw * (0.11 + i * 0.195);
+    return { ...d, tree, got: !!save.disc[d.id], x, baseY: ch - 26 - Math.sin((x / cw) * Math.PI) * 12 };
+  });
+  const rng = mulberry32(4242);
+  const dots = [];
+  for (let i = 0; i < 42; i++) dots.push({ x: rng() * cw, y: rng() * ch * 0.55, r: 0.5 + rng() * 0.9, ph: rng() * TAU, sp: 0.5 + rng() * 1.4 });
+  bookScene = { cw, ch, specs, dots, petals: [] };
+}
+
+function drawBookConst(c, i, bx, by, bw, bh, now) {
+  const p = PLANETS[i], st = save.planets[i], C = p.constellation;
+  const locked = isLocked(i);
+  const pos = j => ({ x: bx + C.stars[j][0] * bw, y: by + C.stars[j][1] * bh });
+  if (st.complete) {
+    const gl = c.createRadialGradient(bx + bw / 2, by + bh / 2, 0, bx + bw / 2, by + bh / 2, bw * 0.62);
+    gl.addColorStop(0, `rgba(255,235,180,${(0.06 + 0.04 * Math.sin(now / 1300 + i)).toFixed(3)})`);
+    gl.addColorStop(1, 'rgba(255,235,180,0)');
+    c.fillStyle = gl;
+    c.fillRect(bx - 8, by - 8, bw + 16, bh + 16);
+  }
+  c.lineWidth = 0.8;
+  for (const [a, b] of C.lines) {
+    const drawn = st.complete || (a < st.filled && b < st.filled);
+    if (!drawn) continue;
+    c.strokeStyle = `rgba(255,240,200,${st.complete ? (0.3 + 0.15 * Math.sin(now / 900 + i)).toFixed(2) : '0.2'})`;
+    const A = pos(a), B = pos(b);
+    c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke();
+  }
+  for (let j = 0; j < C.stars.length; j++) {
+    const P = pos(j);
+    if (locked) {
+      c.fillStyle = 'rgba(232,220,184,.08)';
+      c.beginPath(); c.arc(P.x, P.y, 1, 0, TAU); c.fill();
+    } else if (j < st.filled) {
+      const r = 2.6 * (1 + 0.15 * Math.sin(now / 700 + j * 1.7 + i));
+      c.drawImage(starSprite(p.starTint, 3), P.x - r * 2, P.y - r * 2, r * 4, r * 4);
+    } else {
+      c.fillStyle = 'rgba(232,220,184,.22)';
+      c.beginPath(); c.arc(P.x, P.y, 1.1, 0, TAU); c.fill();
+    }
+  }
+  c.fillStyle = locked ? 'rgba(232,220,184,.3)' : `rgba(232,220,184,${st.complete ? '.95' : '.6'})`;
+  c.font = '9px "Hiragino Mincho ProN", "Yu Mincho", serif';
+  c.textAlign = 'center';
+  c.fillText(locked ? '？？？' : p.name, bx + bw / 2, by + bh + 11);
+  if (!locked && !st.complete) c.fillText(`${st.filled} / ${C.stars.length}`, bx + bw / 2, by + bh + 22);
+  if (st.complete) c.fillText('─ 灯った ─', bx + bw / 2, by + bh + 22);
+}
+
+function drawMiniTree(c, spec, now) {
+  const p = PLANETS[spec.pi], t = spec.tree;
+  c.save();
+  c.translate(spec.x, spec.baseY);
+  c.rotate(Math.sin(now / 1900 + t.sway) * 0.02);
+  if (spec.aura) {
+    const g = c.createRadialGradient(0, -t.h * 0.5, 2, 0, -t.h * 0.5, t.h * 0.9);
+    g.addColorStop(0, `rgba(255,236,180,${(0.13 + 0.05 * Math.sin(now / 1100)).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(255,236,180,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(0, -t.h * 0.5, t.h * 0.9, 0, TAU); c.fill();
+  }
+  c.lineCap = 'round';
+  for (const s of t.segs) {
+    c.strokeStyle = p.branch[s.depth];
+    c.lineWidth = Math.max(0.6, s.w * 0.9);
+    c.beginPath(); c.moveTo(s.x0, s.y0); c.lineTo(s.x1, s.y1); c.stroke();
+  }
+  c.fillStyle = p.branch[3];
+  c.globalAlpha = 0.85;
+  for (const l of t.leaves) {
+    c.save(); c.translate(l.x, l.y); c.rotate(l.ang);
+    c.beginPath(); c.ellipse(l.size, 0, l.size, l.size * 0.38, 0, 0, TAU); c.fill();
+    c.restore();
+  }
+  c.globalAlpha = 1;
+  for (const f of t.flowers) {
+    const sc = 1 + 0.06 * Math.sin(now / 900 + f.phase);
+    const sp = flowerSprite(spec.gold ? 'gold' : p.petalHues[f.hueIdx], f.r, f.petals);
+    const S = f.r * 4.6 * sc;
+    c.drawImage(sp, f.x - S / 2, f.y - S / 2, S, S);
+  }
+  c.restore();
+}
+
+function drawBook(now) {
+  if (!bookScene) return;
+  const { cw, ch, specs, dots, petals } = bookScene;
+  const c = bookCanvas.getContext('2d');
+  c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g = c.createLinearGradient(0, 0, 0, ch);
+  g.addColorStop(0, '#0a081f'); g.addColorStop(0.62, '#151038'); g.addColorStop(1, '#1c1545');
+  c.fillStyle = g; c.fillRect(0, 0, cw, ch);
+  for (const d of dots) {
+    c.globalAlpha = 0.2 + 0.5 * (0.5 + 0.5 * Math.sin(now / 1000 * d.sp + d.ph));
+    c.fillStyle = '#fff';
+    c.beginPath(); c.arc(d.x, d.y, d.r, 0, TAU); c.fill();
+  }
+  c.globalAlpha = 1;
+  // 星図（上段3・下段2）
+  const bw = cw * 0.24, bh = 52;
+  for (let i = 0; i < 5; i++) {
+    const row = i < 3 ? 0 : 1;
+    const col = i < 3 ? i : i - 3;
+    const n = row === 0 ? 3 : 2;
+    const bx = cw / 2 + (col - (n - 1) / 2) * cw * 0.31 - bw / 2;
+    const by = 12 + row * (bh + 32);
+    drawBookConst(c, i, bx, by, bw, bh, now);
+  }
+  c.fillStyle = 'rgba(232,220,184,.55)';
+  c.font = '9px "Hiragino Mincho ProN", "Yu Mincho", serif';
+  c.textAlign = 'right';
+  c.fillText(`☾ 灯した今日の星 × ${save.stats.dailyLit}`, cw - 10, 186);
+  // 丘
+  const hg = c.createRadialGradient(cw / 2, ch + 40, 10, cw / 2, ch + 40, cw * 0.8);
+  hg.addColorStop(0, '#2a2352'); hg.addColorStop(1, '#171034');
+  c.fillStyle = hg;
+  c.beginPath(); c.ellipse(cw / 2, ch + 52, cw * 0.75, 92, 0, 0, TAU); c.fill();
+  // 標本の木々
+  for (const s of specs) {
+    if (s.got) {
+      drawMiniTree(c, s, now);
+      if (petals.length < 14 && Math.random() < 0.012) {
+        const f = s.tree.flowers[Math.floor(Math.random() * s.tree.flowers.length)];
+        if (f) petals.push({ x: s.x + f.x, y: s.baseY + f.y, vx: (Math.random() - .5) * 8, vy: 6 + Math.random() * 9, life: 3, life0: 3, hue: s.gold ? 48 : PLANETS[s.pi].petalHues[f.hueIdx], rot: Math.random() * TAU, vr: (Math.random() - .5) * 2, ph: Math.random() * TAU });
+      }
+    } else {
+      c.fillStyle = 'rgba(232,220,184,.14)';
+      c.beginPath(); c.arc(s.x, s.baseY - 14, 11, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(232,220,184,.4)';
+      c.font = '12px "Hiragino Mincho ProN", serif'; c.textAlign = 'center';
+      c.fillText('？', s.x, s.baseY - 10);
+    }
+    c.fillStyle = s.got ? 'rgba(232,220,184,.8)' : 'rgba(232,220,184,.35)';
+    c.font = '9px "Hiragino Mincho ProN", "Yu Mincho", serif'; c.textAlign = 'center';
+    c.fillText(s.got ? s.name : '？？？', s.x, ch - 8);
+  }
+  // 花びら
+  const dt = 1 / 60;
+  for (let i = petals.length - 1; i >= 0; i--) {
+    const pt = petals[i];
+    pt.life -= dt;
+    if (pt.life <= 0 || pt.y > ch) { petals.splice(i, 1); continue; }
+    pt.x += (pt.vx + Math.sin(now / 520 + pt.ph) * 10) * dt;
+    pt.y += pt.vy * dt; pt.rot += pt.vr * dt;
+    c.globalAlpha = clamp(pt.life / pt.life0, 0, 1) * 0.8;
+    c.fillStyle = `hsl(${pt.hue},80%,82%)`;
+    c.save(); c.translate(pt.x, pt.y); c.rotate(pt.rot);
+    c.beginPath(); c.ellipse(0, 0, 2.2, 1.2, 0, 0, TAU); c.fill();
+    c.restore();
+  }
+  c.globalAlpha = 1;
+}
+
+function bookLoop(ts) {
+  drawBook(ts);
+  bookRAF = requestAnimationFrame(bookLoop);
+}
+
 document.getElementById('bookBtn').addEventListener('click', () => {
   const found = DISCOVERIES.filter(d => save.disc[d.id]).length;
-  document.getElementById('bookStats').textContent =
-    `✦ ${save.total}　／　咲いた花 ${save.stats.blooms}　／　灯した今日の星 ${save.stats.dailyLit}　／　発見 ${found}/${DISCOVERIES.length}`;
+  const nextLocked = PLANETS.find((p, i) => isLocked(i));
+  document.getElementById('bookStats').innerHTML =
+    `✦ ${save.total}　／　咲いた花 ${save.stats.blooms}　／　発見 ${found}/${DISCOVERIES.length}` +
+    (nextLocked ? `<br>つぎの星「？？？」まで ✦ あと ${nextLocked.unlock - save.total}` : '');
   const rows = document.getElementById('bookRows');
   rows.innerHTML = '';
   for (const d of DISCOVERIES) {
@@ -1079,8 +1418,14 @@ document.getElementById('bookBtn').addEventListener('click', () => {
     rows.appendChild(row);
   }
   bookEl.classList.add('open');
+  buildBookScene();
+  cancelAnimationFrame(bookRAF);
+  bookRAF = requestAnimationFrame(bookLoop);
 });
-document.getElementById('closeBook').addEventListener('click', () => bookEl.classList.remove('open'));
+document.getElementById('closeBook').addEventListener('click', () => {
+  bookEl.classList.remove('open');
+  cancelAnimationFrame(bookRAF);
+});
 
 // 日付が変わったら「今日の星」を更新する
 document.addEventListener('visibilitychange', () => {
@@ -1122,13 +1467,11 @@ function drawConstellation(now) {
 
 function drawPlant(pl, now) {
   const p = curPlanet();
-  const progress = pl.done ? 1 : clamp((now - pl.born) / (GROW_SEC * 1000), 0, 1);
-  if (!pl.done) {
-    for (const f of pl.tree.flowers) {
-      if (!f.bloomed && progress >= f.t) bloomFlower(pl, f);
-    }
-    if (progress >= 1) { pl.done = true; }
+  const progress = pl.done ? 1 : growProgress(now - pl.born, pl.dur || GROW_MS);
+  for (const f of pl.tree.flowers) {
+    if (!f.bloomed && progress >= f.t && now >= (f.dueAt || 0)) bloomFlower(pl, f);
   }
+  if (!pl.done && progress >= 1) pl.done = true;
   ctx.save();
   ctx.translate(PC.x, PC.y);
   ctx.rotate(pl.a + rot + Math.sin(now / 1600 + pl.tree.sway) * 0.014);
@@ -1185,7 +1528,9 @@ function frame(now) {
   const p = curPlanet();
   if (Audio2.ready && !save.muted && !document.hidden) {
     if (now / 1000 >= nextChordAt) {
-      Audio2.pad(p.prog[chordIdx % p.prog.length], p.chordDur);
+      const chord = p.prog[chordIdx % p.prog.length];
+      Audio2.pad(chord, p.chordDur);
+      scheduleMelody(chord, p.chordDur);
       chordIdx++;
       nextChordAt = Math.max(nextChordAt + p.chordDur, now / 1000);
     }
@@ -1194,6 +1539,15 @@ function frame(now) {
   }
 
   ctx.drawImage(backdrop, 0, 0, W, H);
+
+  for (const bs of breathSpots) {
+    const al = 0.03 + 0.035 * (0.5 + 0.5 * Math.sin(now / 4200 * bs.sp + bs.ph));
+    const bg2 = ctx.createRadialGradient(bs.x, bs.y, 0, bs.x, bs.y, bs.r);
+    bg2.addColorStop(0, bs.col.replace('alpha', al.toFixed(3)));
+    bg2.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg2;
+    ctx.beginPath(); ctx.arc(bs.x, bs.y, bs.r, 0, TAU); ctx.fill();
+  }
 
   for (const tw of twinkles) {
     const a = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(now / 1000 * tw.sp + tw.ph));
@@ -1249,8 +1603,12 @@ function frame(now) {
   }
 
   drawGreatTree(now);
+  if (greatTree && greatTree.st.gt.stage > 0) {
+    shedPetals({ done: true, a: greatTree.a, tree: greatTree.tree }, p, greatTree.st.gt.stage >= GT_MAX);
+  }
   updateFruits(now);
-  for (const pl of plants) drawPlant(pl, now);
+  for (const pl of plants) { drawPlant(pl, now); shedPetals(pl, p); }
+  updateFireflies(now, dt);
 
   for (let i = particles.length - 1; i >= 0; i--) {
     const pt = particles[i];
@@ -1266,6 +1624,17 @@ function frame(now) {
       ctx.globalAlpha = clamp(pt.life / 2.4, 0, 1) * 0.8;
       ctx.fillStyle = pt.tint;
       ctx.beginPath(); ctx.arc(pt.x, pt.y, 1.4, 0, TAU); ctx.fill();
+    } else if (pt.kind === 'petal') {
+      pt.x += (pt.vx + Math.sin(now / 520 + pt.ph) * 15) * dt;
+      pt.y += pt.vy * dt;
+      pt.rot += pt.vr * dt;
+      if (pt.y > H + 8) { particles.splice(i, 1); continue; }
+      ctx.globalAlpha = clamp(pt.life / pt.life0, 0, 1) * 0.85;
+      ctx.fillStyle = `hsl(${pt.hue},80%,82%)`;
+      ctx.save();
+      ctx.translate(pt.x, pt.y); ctx.rotate(pt.rot);
+      ctx.beginPath(); ctx.ellipse(0, 0, pt.sz, pt.sz * 0.55, 0, 0, TAU); ctx.fill();
+      ctx.restore();
     } else if (pt.kind === 'ripple') {
       const k = 1 - pt.life / 0.7;
       ctx.globalAlpha = pt.life;
