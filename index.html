@@ -125,6 +125,50 @@
 
   #fade { position: fixed; inset: 0; background: #060518; opacity: 0; pointer-events: none; transition: opacity .55s; z-index: 20; }
   #fade.on { opacity: 1; }
+
+  /* v8: 現実連動ラベル（時刻・季節・称号） */
+  #skyLabel { font-size: 10px; letter-spacing: .28em; opacity: .62; margin-top: 5px; }
+  #skyLabel .era { color: #ffe4a8; opacity: .95; }
+
+  /* v8: 奉納 */
+  #offerBtn {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 116px);
+    font-family: inherit; font-size: 12px; letter-spacing: .32em; text-indent: .32em;
+    background: rgba(18,14,40,.62); border: 1px solid rgba(255,220,140,.55); border-radius: 22px;
+    padding: 9px 26px; color: #ffe9b0; cursor: pointer; z-index: 12;
+    text-shadow: 0 1px 4px rgba(4,3,16,.9); box-shadow: 0 0 22px rgba(255,215,130,.22);
+    opacity: 0; pointer-events: none; transition: opacity .9s;
+  }
+  #offerBtn.show { opacity: 1; pointer-events: auto; }
+  #offerBtn.show { animation: offerPulse 3.4s ease-in-out infinite; }
+  @keyframes offerPulse {
+    0%, 100% { box-shadow: 0 0 18px rgba(255,215,130,.18); }
+    50%      { box-shadow: 0 0 30px rgba(255,215,130,.42); }
+  }
+
+  #offerModal {
+    position: fixed; inset: 0; z-index: 30; display: none;
+    background: rgba(4,4,16,.82); backdrop-filter: blur(3px);
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  #offerModal.on { display: flex; }
+  #offerModal .box {
+    max-width: 340px; text-align: center;
+    border: 1px solid rgba(255,220,140,.32); border-radius: 14px;
+    background: rgba(12,10,30,.9); padding: 26px 22px;
+  }
+  #offerModal h3 { font-size: 15px; letter-spacing: .4em; text-indent: .4em; color: #ffe9b0; margin-bottom: 14px; font-weight: normal; }
+  #offerModal p { font-size: 12px; line-height: 2; opacity: .85; letter-spacing: .08em; }
+  #offerModal .keep { color: #bfe8c0; }
+  #offerModal .lose { color: #f0c0b8; }
+  #offerModal .btns { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+  #offerModal button {
+    font-family: inherit; font-size: 12px; letter-spacing: .28em; text-indent: .28em;
+    background: none; border: 1px solid rgba(232,220,184,.4); border-radius: 20px;
+    padding: 9px 20px; color: #e8dcb8; cursor: pointer;
+  }
+  #offerModal button.yes { border-color: rgba(255,220,140,.7); color: #ffe9b0; }
 </style>
 </head>
 <body>
@@ -132,7 +176,7 @@
 <div class="scrim" id="scrimTop"></div>
 <div class="scrim" id="scrimBottom"></div>
 
-<div class="ui" id="header"><h1>星の庭</h1><div class="sub">STELLA BOTANICA</div></div>
+<div class="ui" id="header"><h1>星の庭</h1><div class="sub">STELLA BOTANICA</div><div id="skyLabel"></div></div>
 <div class="ui" id="counter">✦ <span id="starCount">0</span></div>
 <button class="ui" id="muteBtn">♪</button>
 <button class="ui" id="zenBtn" title="鑑賞モード">✧</button>
@@ -156,6 +200,24 @@
   <button id="prevBtn">❮</button>
   <div id="planetName"><div class="n"></div><div class="m"></div><div class="d"></div></div>
   <button id="nextBtn">❯</button>
+</div>
+<button id="offerBtn">星座を奉納する</button>
+<div id="offerModal">
+  <div class="box">
+    <h3>奉 納</h3>
+    <p>
+      五つの空の星座を、天へ還します。<br><br>
+      <span class="lose">庭の木と星座は、すべて還ります</span><br>
+      <span class="keep">大樹・星霜・✦・発見の記は残ります</span><br><br>
+      奉納した星座は空へ永く積もり、<br>
+      次の巡りでは木がはやく育ち、<br>
+      花の実りが増えます。
+    </p>
+    <div class="btns">
+      <button id="offerNo">まだ</button>
+      <button id="offerYes" class="yes">奉納する</button>
+    </div>
+  </div>
 </div>
 <div id="fade"></div>
 
@@ -325,7 +387,8 @@ const MAX_PLANTS = 9;
 const GROW_MS = 5 * 3600 * 1000;   // 通常の星：5時間（実時間）かけて育つ
 const GROW_MS_DAILY = 45 * 1000;   // 日替わりの星：一夜かぎりなので45秒
 const GROW_FAST_MS = 180 * 1000, GROW_HEAD = 0.22; // 最初の3分で22%まで（芽吹きと最初の花はその場で見られる）
-function plantDur() { return curPlanet().isDaily ? GROW_MS_DAILY : GROW_MS; }
+// v8: 巡りを重ねるほど、通常の星の木は速く育つ（日替わりの星は一夜かぎりなので据え置き）
+function plantDur() { return curPlanet().isDaily ? GROW_MS_DAILY : GROW_MS * eraGrowFactor(); }
 function growProgress(elapsed, dur) {
   if (dur < 600e3) return clamp(elapsed / dur, 0, 1);
   if (elapsed < GROW_FAST_MS) return clamp(GROW_HEAD * elapsed / GROW_FAST_MS, 0, GROW_HEAD);
@@ -345,7 +408,56 @@ for (const ps of save.planets) { if (!ps.gt) ps.gt = { stage: 0, last: '' }; if 
 if (save.cur > PLANETS.length) save.cur = 0;
 if (!save.disc) save.disc = {};
 if (!save.stats) save.stats = { blooms: 0, dailyLit: 0 };
+// v8: 周回（奉納）。既存セーブは era=0 / 奉納なしとして扱う
+if (save.era == null) save.era = 0;
+if (!Array.isArray(save.offerings)) save.offerings = [];
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+// ---------------- v8: 巡り（奉納と周回）----------------
+// 五つの星座をすべて灯すと「奉納」できる。庭はリセットされるが、
+// 大樹・星霜・発見の記・✦は残り、空には奉納した星座が恒久的に積み重なる。
+// 周回するほど木の育ちが速くなり、開花の実りが増える（＝やり直しが罰にならない）。
+const ERA_TITLES = [
+  '', '一の巡り　星まきびと', '二の巡り　花守', '三の巡り　星座の語り手',
+  '四の巡り　夜のまなびと', '五の巡り　天球の庭師', '六の巡り　星霜の主',
+];
+function eraTitle(e = save.era) {
+  if (e <= 0) return '';
+  return ERA_TITLES[Math.min(e, ERA_TITLES.length - 1)] + (e >= ERA_TITLES.length ? `（${e}）` : '');
+}
+// 育ちの速さ：1周ごとに6%短く、最大40%まで
+function eraGrowFactor() { return 1 - Math.min(0.40, save.era * 0.06); }
+// 開花の実り：1周ごとに✦+1、最大+3
+function eraBloomBonus() { return Math.min(3, save.era); }
+function canOffer() { return save.planets.every(s => s.complete); }
+
+// ---------------- v8: 現実連動（端末の時刻と季節）----------------
+// 開くたびに空の色と音の表情が変わる。夜ふかしの庭は静かで暗い。
+const TIME_BANDS = [
+  { until: 4.5,  key: 'shinya',   ja: '深夜', tint: '#05081a', amt: 0.46, calm: 0.55, slow: 1.28 },
+  { until: 6.5,  key: 'akatsuki', ja: '暁',   tint: '#54385e', amt: 0.26, calm: 0.80, slow: 1.12 },
+  { until: 10,   key: 'asa',      ja: '朝',   tint: '#6d84b8', amt: 0.24, calm: 1.00, slow: 0.94 },
+  { until: 15,   key: 'hiru',     ja: '昼',   tint: '#8ba2cf', amt: 0.28, calm: 1.05, slow: 0.90 },
+  { until: 18.5, key: 'yuu',      ja: '夕',   tint: '#a25445', amt: 0.28, calm: 0.95, slow: 1.00 },
+  { until: 22,   key: 'yoi',      ja: '宵',   tint: '#2b2554', amt: 0.18, calm: 0.88, slow: 1.08 },
+  { until: 24.1, key: 'shinya',   ja: '深夜', tint: '#05081a', amt: 0.46, calm: 0.55, slow: 1.28 },
+];
+function timeBand(d = new Date()) {
+  const h = d.getHours() + d.getMinutes() / 60;
+  return TIME_BANDS.find(b => h < b.until) || TIME_BANDS[TIME_BANDS.length - 1];
+}
+const SEASONS = [
+  { ja: '冬', hue: -14 }, { ja: '春', hue: 6 }, { ja: '夏', hue: 16 }, { ja: '秋', hue: -6 },
+];
+function seasonOf(d = new Date()) {
+  const m = d.getMonth() + 1;
+  if (m === 12 || m <= 2) return SEASONS[0];
+  if (m <= 5) return SEASONS[1];
+  if (m <= 8) return SEASONS[2];
+  return SEASONS[3];
+}
+// 花の色相を季節でわずかにずらす（春はほんのり暖かく、冬は青みに）
+function seasonHue(h) { return ((h + seasonOf().hue) % 360 + 360) % 360; }
 
 // ---------------- 音（WebAudio）----------------
 const Audio2 = {
@@ -356,7 +468,7 @@ const Audio2 = {
       const AC = window.AudioContext || window.webkitAudioContext;
       this.ctx = new AC();
       this.master = this.ctx.createGain();
-      this.master.gain.value = save.muted ? 0 : 0.9;
+      this.master.gain.value = save.muted ? 0 : 0.9 * timeBand().calm;   // v8: 深夜はしずかに
       const delay = this.ctx.createDelay(2);
       delay.delayTime.value = 0.46;
       const fb = this.ctx.createGain(); fb.gain.value = 0.35;
@@ -408,7 +520,7 @@ const Audio2 = {
     });
   },
   bellForce(f, v) { this.lastNote = 0; this.bell(f, v); },
-  setMuted(m) { if (this.master) this.master.gain.value = m ? 0 : 0.9; },
+  setMuted(m) { if (this.master) this.master.gain.value = m ? 0 : 0.9 * timeBand().calm; },
 };
 
 // 和音に寄り添う自動の旋律（薄く・まばらに。ときどき休符の小節）
@@ -573,6 +685,46 @@ function starSprite(tint, r) {
 
 // ---------------- 背景・惑星（オフスクリーン描画）----------------
 let backdrop = null, planetSprite = null, twinkles = [], breathSpots = [];
+// '#rrggbb' + alpha → 'rgba(r,g,b,a)'
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a.toFixed(3)})`;
+}
+
+// v8: 奉納された星座を背景に描く（巡りごとに1つ、位置と形はシード決定論的）
+const OFFER_POOL = [BUTTERFLY, MOONBOAT, LYRE, SAKURA, ROCKET, HEART, BIRD, CLOVER];
+function drawOfferings(c) {
+  const n = save.offerings.length;
+  for (let i = 0; i < n; i++) {
+    const rng = mulberry32(9173 + i * 613);
+    const shape = OFFER_POOL[Math.floor(rng() * OFFER_POOL.length)];
+    const s = (0.10 + rng() * 0.05) * Math.min(W, H) * 2;   // 小さめ
+    const ox = W * (0.08 + rng() * 0.84) - s / 2;
+    const oy = H * (0.03 + rng() * 0.34) - s / 2;
+    // 古い巡りほど淡く沈む（重なっても濁らないように）
+    const fade = 0.30 + 0.34 * ((i + 1) / n);
+    c.save();
+    c.strokeStyle = `rgba(255,228,150,${(0.16 * fade).toFixed(3)})`;
+    c.lineWidth = 1;
+    for (const [a, b] of shape.lines) {
+      const p1 = shape.stars[a], p2 = shape.stars[b];
+      c.beginPath();
+      c.moveTo(ox + p1[0] * s, oy + p1[1] * s);
+      c.lineTo(ox + p2[0] * s, oy + p2[1] * s);
+      c.stroke();
+    }
+    for (const st of shape.stars) {
+      const x = ox + st[0] * s, y = oy + st[1] * s;
+      const gr = c.createRadialGradient(x, y, 0, x, y, 4.5);
+      gr.addColorStop(0, `rgba(255,240,190,${(0.75 * fade).toFixed(3)})`);
+      gr.addColorStop(1, 'rgba(255,230,160,0)');
+      c.fillStyle = gr;
+      c.beginPath(); c.arc(x, y, 4.5, 0, TAU); c.fill();
+    }
+    c.restore();
+  }
+}
+
 function buildScene(p) {
   backdrop = document.createElement('canvas');
   backdrop.width = W * DPR; backdrop.height = H * DPR;
@@ -595,6 +747,16 @@ function buildScene(p) {
     c.fillStyle = `rgba(255,255,255,${a.toFixed(2)})`;
     c.beginPath(); c.arc(rng() * W, rng() * H, rng() < 0.9 ? 0.7 : 1.4, 0, TAU); c.fill();
   }
+  // v8: 奉納した星座を、恒久的に空へ重ねる（巡りを重ねるほど空が賑やかになる）
+  drawOfferings(c);
+
+  // v8: 現実の時刻に合わせて空を染める（深夜は沈み、昼は明るむ）
+  const tb = timeBand();
+  const tg = c.createLinearGradient(0, 0, 0, H);
+  tg.addColorStop(0, hexA(tb.tint, tb.amt));
+  tg.addColorStop(1, hexA(tb.tint, tb.amt * 0.35));
+  c.fillStyle = tg; c.fillRect(0, 0, W, H);
+
   const vg = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.75);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(2,2,12,.5)');
   c.fillStyle = vg; c.fillRect(0, 0, W, H);
@@ -690,7 +852,9 @@ let rot = 0, chordIdx = 0, nextChordAt = 0, bannerShown = false;
 
 function skyBox() { return { x: W * 0.08, y: H * 0.06, w: W * 0.84, h: H * 0.44 }; }
 function slotPos(i) {
-  const p = curPlanet(), b = skyBox(), s = p.constellation.stars[i];
+  const p = curPlanet(), b = skyBox(), stars = p.constellation.stars;
+  // 念のための防御：範囲外を引くと frame() が落ち、描画ループごと止まってしまう
+  const s = stars[clamp(i, 0, stars.length - 1)];
   return { x: b.x + s[0] * b.w, y: b.y + s[1] * b.h };
 }
 
@@ -724,6 +888,8 @@ function loadPlanet() {
   particles = []; flights = []; showerStars = []; shooting = null; fireflies = [];
   chordIdx = 0; nextChordAt = 0; bannerShown = st.complete;
   const p = curPlanet();
+  // 星座の星数より filled が多い状態（壊れたセーブ等）を正す
+  st.filled = clamp(st.filled | 0, 0, p.constellation.stars.length);
   buildScene(p);
   loadGreatTree();
   if (greatTree && greatTree.st.gt.stage === 0 && gtCanGrow()) {
@@ -770,6 +936,9 @@ const DISCOVERIES = [
   { id: 'ms_100', k: '百', name: '星霜百景', hint: 'ひとつの空に星霜を百', desc: '百の小さな星が、あなたの過ごした季節を憶えている。' },
   { id: 'gt_ring', k: '輪', name: '大樹の年輪', hint: '完成した大樹を、さらに十二夜', desc: '大樹は終わらない。年輪がひとつ、天に刻まれた。' },
   { id: 'gt_elder', k: '齢', name: '老樹', hint: '年輪を五つ重ねよう', desc: '七十二夜を超えて、老樹は星々と語りはじめた。' },
+  { id: 'offer_first', k: '奉', name: '奉納', hint: '五つの空を灯しきった者だけが', desc: '星座を天へ還した。空はひとつぶん、深くなった。' },
+  { id: 'offer_three', k: '巡', name: '三の巡り', hint: '三たび、星座を天へ', desc: '巡りを三つ重ねた。庭はもう、あなたを憶えている。' },
+  { id: 'realtime', k: '刻', name: '空の移ろい', hint: '時をまたいで、庭にとどまろう', desc: '暁も、昼も、深夜も。空はいつも同じ顔ではない。' },
 ];
 function discover(id) {
   if (save.disc[id]) return;
@@ -861,7 +1030,7 @@ function bloomFlower(pl, f) {
   Audio2.bell(fq, 0.15);
   if (pl.tree.stellar) setTimeout(() => Audio2.bellForce(fq * 2, 0.1), 150);
   for (let i = 0; i < 5; i++) {
-    particles.push({ kind: 'dust', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 50, vy: -30 - Math.random() * 30, life: 1.1, tint: pl.tree.stellar ? '#fff2c0' : `hsl(${p.petalHues[f.hueIdx]},80%,80%)` });
+    particles.push({ kind: 'dust', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 50, vy: -30 - Math.random() * 30, life: 1.1, tint: pl.tree.stellar ? '#fff2c0' : `hsl(${seasonHue(p.petalHues[f.hueIdx])},80%,80%)` });
   }
   const st = curState();
   const nSlots = p.constellation.stars.length;
@@ -873,7 +1042,7 @@ function bloomFlower(pl, f) {
   } else {
     flights.push({ sx: pos.x, sy: pos.y, slot: -1, t0: performance.now() });
   }
-  save.total += pl.tree.stellar ? 2 : 1;
+  save.total += (pl.tree.stellar ? 2 : 1) + eraBloomBonus();   // v8: 巡りのぶんだけ実りが増える
   updateCounter(); persist();
 }
 
@@ -998,7 +1167,7 @@ function shedPetals(pl, p, gold) {
   const life = 3.5 + Math.random() * 2;
   particles.push({
     kind: 'petal', x: pos.x, y: pos.y, vx: (Math.random() - .5) * 12, vy: 7 + Math.random() * 13,
-    life, life0: life, hue: (gold || pl.tree.stellar) ? 48 : p.petalHues[f.hueIdx],
+    life, life0: life, hue: (gold || pl.tree.stellar) ? 48 : seasonHue(p.petalHues[f.hueIdx]),
     rot: Math.random() * TAU, vr: (Math.random() - .5) * 2.4, ph: Math.random() * TAU, sz: 2 + Math.random() * 1.7,
   });
 }
@@ -1137,7 +1306,7 @@ function drawGreatTree(now) {
     if (!f.bloomed) continue;
     const age = f.bloomAt ? clamp((now - f.bloomAt) / 600, 0, 1) : 1;
     const sc = (f.bloomAt ? easeOutBack(age) : 1) * (1 + 0.05 * Math.sin(now / 900 + f.phase));
-    const sp = flowerSprite(complete ? 'gold' : p.petalHues[f.hueIdx], f.r, f.petals);
+    const sp = flowerSprite(complete ? 'gold' : seasonHue(p.petalHues[f.hueIdx]), f.r, f.petals);
     const S = f.r * 4.6 * sc;
     ctx.drawImage(sp, f.x - S / 2, f.y - S / 2, S, S);
   }
@@ -1176,6 +1345,7 @@ function starArrive(fl) {
       } else {
         discover('const_' + save.cur);
         if (save.planets.every(s => s.complete)) discover('all_const');
+        refreshOffer();   // v8: 五つ揃ったら奉納ボタンが現れる
       }
       setTimeout(() => {
         const b = document.getElementById('banner');
@@ -1275,6 +1445,67 @@ refreshMute();
 document.getElementById('zenBtn').addEventListener('click', () => {
   document.body.classList.toggle('zen');
 });
+
+// ---------------- v8: 現実連動のラベル ----------------
+const skyLabelEl = document.getElementById('skyLabel');
+function refreshSkyLabel() {
+  const tb = timeBand(), se = seasonOf();
+  const t = eraTitle();
+  skyLabelEl.innerHTML = `${se.ja}　${tb.ja}` + (t ? `　<span class="era">${t}</span>` : '');
+}
+refreshSkyLabel();
+// 時間帯をまたいだら空を染め直す
+let lastBand = timeBand().key;
+setInterval(() => {
+  refreshSkyLabel();
+  const k = timeBand().key;
+  if (k !== lastBand) {
+    lastBand = k;
+    Audio2.setMuted(save.muted);      // 音量を時間帯に合わせ直す
+    buildScene(curPlanet());          // 空を染め直す
+    toast(`空の色が移ろいました ─ ${timeBand().ja}`);
+    discover('realtime');
+  }
+}, 60000);
+
+// ---------------- v8: 奉納（周回）----------------
+const offerBtn = document.getElementById('offerBtn');
+const offerModal = document.getElementById('offerModal');
+function refreshOffer() { offerBtn.classList.toggle('show', canOffer()); }
+
+offerBtn.addEventListener('click', () => { Audio2.init(); offerModal.classList.add('on'); });
+document.getElementById('offerNo').addEventListener('click', () => offerModal.classList.remove('on'));
+document.getElementById('offerYes').addEventListener('click', () => {
+  offerModal.classList.remove('on');
+  doOffer();
+});
+
+function doOffer() {
+  if (!canOffer()) return;
+  save.era++;
+  save.offerings.push({ era: save.era, ts: Date.now() });
+  // 庭と星座だけを還す。大樹(gt)・星霜(ms)・✦(total)・発見の記(disc)は残す
+  for (const ps of save.planets) { ps.plants = []; ps.filled = 0; ps.complete = false; }
+  persist();
+
+  discover('offer_first');
+  if (save.era >= 3) discover('offer_three');
+
+  const fade = document.getElementById('fade');
+  fade.classList.add('on');
+  setTimeout(() => {
+    loadPlanet();          // 庭を作り直し、空に奉納の星座を重ねて描き直す
+    refreshOffer();
+    refreshSkyLabel();
+    fade.classList.remove('on');
+    const b = document.getElementById('banner');
+    b.querySelector('.t').textContent = eraTitle();
+    b.querySelector('.s').textContent = `星座は天に還り、あらたな巡りがはじまる ─ 木の育ちが速くなりました`;
+    b.classList.add('show');
+    Audio2.arpeggio(curPlanet().prog[0]);
+    setTimeout(() => b.classList.remove('show'), 5600);
+  }, 700);
+}
 
 // ---------------- 発見の記（生きたジオラマ）----------------
 const bookEl = document.getElementById('book');
@@ -1416,7 +1647,7 @@ function drawMiniTree(c, spec, now) {
   c.globalAlpha = 1;
   for (const f of t.flowers) {
     const sc = 1 + 0.06 * Math.sin(now / 900 + f.phase);
-    const sp = flowerSprite(spec.gold ? 'gold' : p.petalHues[f.hueIdx], f.r, f.petals);
+    const sp = flowerSprite(spec.gold ? 'gold' : seasonHue(p.petalHues[f.hueIdx]), f.r, f.petals);
     const S = f.r * 4.6 * sc;
     c.drawImage(sp, f.x - S / 2, f.y - S / 2, S, S);
   }
@@ -1508,7 +1739,7 @@ function drawBook(now) {
       drawMiniTree(c, s, now);
       if (petals.length < 14 && Math.random() < 0.012) {
         const f = s.tree.flowers[Math.floor(Math.random() * s.tree.flowers.length)];
-        if (f) petals.push({ x: s.x + f.x, y: s.baseY + f.y, vx: (Math.random() - .5) * 8, vy: 6 + Math.random() * 9, life: 3, life0: 3, hue: s.gold ? 48 : PLANETS[s.pi].petalHues[f.hueIdx], rot: Math.random() * TAU, vr: (Math.random() - .5) * 2, ph: Math.random() * TAU });
+        if (f) petals.push({ x: s.x + f.x, y: s.baseY + f.y, vx: (Math.random() - .5) * 8, vy: 6 + Math.random() * 9, life: 3, life0: 3, hue: s.gold ? 48 : seasonHue(PLANETS[s.pi].petalHues[f.hueIdx]), rot: Math.random() * TAU, vr: (Math.random() - .5) * 2, ph: Math.random() * TAU });
       }
     } else {
       // 未発見：木のシルエット（影絵）＋？で「ここに何かが来る」予感を見せる
@@ -1595,7 +1826,7 @@ function onBookTap(e) {
           bookScene.petals.push({ x: s.x + f.x, y: s.baseY + f.y,
             vx: (Math.random() - .5) * 26, vy: 4 + Math.random() * 14,
             life: 2.4, life0: 2.4,
-            hue: s.gold ? 48 : PLANETS[s.pi].petalHues[f.hueIdx],
+            hue: s.gold ? 48 : seasonHue(PLANETS[s.pi].petalHues[f.hueIdx]),
             rot: Math.random() * TAU, vr: (Math.random() - .5) * 3, ph: Math.random() * TAU });
         }
         bookScene.fx.push({ x: s.x, y: s.baseY - s.tree.h * 0.5, r: 6, life: 0.8, life0: 0.8 });
@@ -1629,6 +1860,10 @@ document.getElementById('bookBtn').addEventListener('click', () => {
   document.getElementById('bookStats').innerHTML =
     `✦ ${save.total}　／　咲いた花 ${save.stats.blooms}　／　発見 ${found}/${DISCOVERIES.length}` +
     `<br>星霜 ${msTotal}　／　大樹の齢 ${gtTotal}夜` +
+    (save.era > 0
+      ? `<br><span style="color:#ffe4a8">${eraTitle()}</span>　／　奉納 ${save.offerings.length}　`
+        + `育ち ×${(1 / eraGrowFactor()).toFixed(2)}　実り +${eraBloomBonus()}`
+      : '') +
     (nextLocked ? `<br>つぎの星「？？？」まで ✦ あと ${nextLocked.unlock - save.total}` : '');
   const rows = document.getElementById('bookRows');
   rows.innerHTML = '';
@@ -1734,7 +1969,7 @@ function drawPlant(pl, now) {
     if (f.bloomed) {
       const age = f.bloomAt ? clamp((now - f.bloomAt) / 600, 0, 1) : 1;
       const sc = (f.bloomAt ? easeOutBack(age) : 1) * (1 + 0.05 * Math.sin(now / 900 + f.phase));
-      const sp = flowerSprite(pl.tree.stellar ? 'gold' : p.petalHues[f.hueIdx], f.r, f.petals);
+      const sp = flowerSprite(pl.tree.stellar ? 'gold' : seasonHue(p.petalHues[f.hueIdx]), f.r, f.petals);
       const S = f.r * 4.6 * sc;
       ctx.drawImage(sp, f.x - S / 2, f.y - S / 2, S, S);
     } else if (progress > f.t - 0.08) {
@@ -1761,10 +1996,11 @@ function frame(now) {
   if (Audio2.ready && !save.muted && !document.hidden) {
     if (now / 1000 >= nextChordAt) {
       const chord = p.prog[chordIdx % p.prog.length];
-      Audio2.pad(chord, p.chordDur);
-      scheduleMelody(chord, p.chordDur);
+      const cd = p.chordDur * timeBand().slow;   // v8: 深夜は和音がゆっくり移ろう
+      Audio2.pad(chord, cd);
+      scheduleMelody(chord, cd);
       chordIdx++;
-      nextChordAt = Math.max(nextChordAt + p.chordDur, now / 1000);
+      nextChordAt = Math.max(nextChordAt + cd, now / 1000);
     }
   } else {
     nextChordAt = now / 1000 + 0.1;
@@ -1892,6 +2128,7 @@ function frame(now) {
 
 resize();
 loadPlanet();
+refreshOffer();
 requestAnimationFrame(frame);
 </script>
 </body>
